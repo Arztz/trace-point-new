@@ -1,0 +1,47 @@
+app:
+  host: "0.0.0.0"
+  port: 8088
+
+prometheus:
+  url: "http://prod.prometheus.fundii-prod.internal"
+  timeout: 30s
+  use_deployment_aggregation: true
+
+signoz:
+  url: "http://localhost:37357"
+  user: "default"
+  password: "REDACTED" # Fill out your ClickHouse password here
+  timeout: 30s
+  database: "signoz_traces"
+
+gcloud:
+  project_id: "fundii-production"
+  profiler_enabled: true
+
+detection:
+  cpu_threshold: 80
+  memory_threshold: 85
+  polling_interval_seconds: 30
+  moving_average_window_minutes: 30
+  baseline_learning_period_minutes: 5
+  reconciliation_buffer_minutes: 8
+  cooldown_minutes: 15
+
+timeline:
+  cpu_close_to_100_threshold: 85
+  cpu_far_below_100_threshold: 50
+
+discord:
+  enabled: true
+  webhook_url: "https://discord.com/api/webhooks/1489190429139271720/GOWQh5o3lqPZUA50FNj5hLEhLQdSkI14gMqGFrl9oc4sAy9nvz3nUqNwOW8G7gLt4_xo"
+
+database:
+  type: "sqlite"
+  path: "./data/trace-point.db"
+
+namespaces:
+  - "fundii"
+
+deploy_exclude_patterns:
+  - "^kube-"
+  - "^system-"
