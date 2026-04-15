@@ -80,10 +80,11 @@ func (c *Client) fetchProfiles(ctx context.Context, serviceName string, start, e
 
 	req := &cloudprofilerpb.ListProfilesRequest{
 		Parent:   parent,
-		PageSize: 100,
+		PageSize: 1000,
 	}
 
 	var profiles []ProfileResult
+	seenTargets := make(map[string]bool)
 
 	it := client.ListProfiles(ctx, req)
 	for {
@@ -94,33 +95,32 @@ func (c *Client) fetchProfiles(ctx context.Context, serviceName string, start, e
 		if err != nil {
 			return nil, fmt.Errorf("error iterating profiles: %w", err)
 		}
+		// Filter by deployment/service name FIRST since we know the target
+		if profile.Deployment != nil {
+			target := profile.Deployment.Target
+
+			if !seenTargets[target] {
+				log.Printf("[Profiler] Scanned Target (First occurrence): %v", target)
+				seenTargets[target] = true
+			}
+
+			// log.Printf("[Profiler] Compare Target: %v, %v", strings.ToLower(target), strings.ToLower(serviceName))
+			if target != "" && !strings.Contains(strings.ToLower(target), strings.ToLower(serviceName)) {
+				continue
+			}
+		}
 
 		// Filter by time range
 		if profile.Duration != nil && profile.StartTime != nil {
 			profileStart := profile.StartTime.AsTime()
 			profileEnd := profileStart.Add(profile.Duration.AsDuration())
 
-			// GCP ListProfiles returns newer profiles first.
-			// If this profile ended BEFORE our start window, then all subsequent profiles 
-			// in the iterator will also be older, so we can stop fetching entirely!
-			if profileEnd.Before(start) {
-				break
-			}
-
-			// If it's newer than our window, skip it but keep looking
-			if profileStart.After(end) {
+			// Check if profile overlaps with our time window
+			if profileEnd.Before(start) || profileStart.After(end) {
 				continue
 			}
 		}
-
-		// Filter by deployment/service name
-		if profile.Deployment != nil {
-			target := profile.Deployment.Target
-			if target != "" && !strings.Contains(strings.ToLower(target), strings.ToLower(serviceName)) {
-				continue
-			}
-		}
-
+		log.Printf("[Profiler] Profile: %v", profile)
 		// Extract profile data
 		result := ProfileResult{
 			ProfileType: profile.ProfileType.String(),
