@@ -1,9 +1,80 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useTimeline } from '../hooks/useData';
 import TimelineChart from '../components/TimelineChart';
 import TimeRangeSelector from '../components/TimeRangeSelector';
 import DeploymentSelector from '../components/DeploymentSelector';
 import { formatPercent, getDeploymentColor } from '../utils/formatters';
+
+/**
+ * Shows a multiplier hint next to a metric value.
+ * value: percentage (0–200+), where 100% = currently using exactly as requested.
+ * multiplier = value / 100
+ *   < 1 → overprovisioned → green
+ *   > 1 → underprovisioned → red
+ *   = 1 → no label shown
+ */
+function RecommendHint({ value, label, target = 80 }) {
+  const [show, setShow] = useState(false);
+  const ref = useRef(null);
+
+  // Multiplier to resize so that utilization lands at `target`%
+  // e.g. avg=50, target=80 → multiplier=0.625 (reduce to 62.5% of current request)
+  const multiplier = value / target;
+  // Only show label if meaningfully different from 1 (±5% tolerance)
+  if (Math.abs(multiplier - 1) < 0.05) return null;
+
+  const isLow = multiplier < 1;
+  const color = isLow ? '#22c55e' : '#ef4444'; // green / red
+  const label2 = `x${multiplier.toFixed(2)}`;
+
+  return (
+    <span ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+      <span
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        style={{
+          fontSize: '11px',
+          fontWeight: 600,
+          color,
+          cursor: 'default',
+          padding: '1px 4px',
+          borderRadius: '4px',
+          background: isLow ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
+          letterSpacing: '0.01em',
+          userSelect: 'none',
+        }}
+      >
+        {label2}
+      </span>
+      {show && (
+        <span style={{
+          position: 'absolute',
+          bottom: '120%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'var(--color-bg-primary)',
+          border: '1px solid var(--color-border)',
+          borderRadius: '6px',
+          padding: '5px 9px',
+          fontSize: '11px',
+          whiteSpace: 'nowrap',
+          color: 'var(--color-text-primary)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          zIndex: 50,
+          pointerEvents: 'none',
+        }}>
+          <span style={{ color, fontWeight: 700 }}>{label2}</span> · {label}
+          <br />
+          <span style={{ color: 'var(--color-text-muted)' }}>
+            {isLow
+              ? `Overprovisioned — resize to ${label2} → util lands at ~${target}%`
+              : `Underprovisioned — resize to ${label2} → util lands at ~${target}%`}
+          </span>
+        </span>
+      )}
+    </span>
+  );
+}
 
 export default function Dashboard() {
   const [timeRange, setTimeRange] = useState('1h');
@@ -223,29 +294,45 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
+                        {/* Avg CPU */}
                         <div>
                           <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>Avg CPU</p>
-                          <p className="text-lg font-mono font-semibold" style={{ color: 'var(--color-accent-cpu)' }}>
-                            {formatPercent(s.avg_cpu)}
-                          </p>
+                          <div className="flex items-baseline gap-1.5">
+                            <p className="text-lg font-mono font-semibold" style={{ color: 'var(--color-accent-cpu)' }}>
+                              {formatPercent(s.avg_cpu)}
+                            </p>
+                            <RecommendHint value={s.avg_cpu} label="Recommend request" />
+                          </div>
                         </div>
+                        {/* Max CPU */}
                         <div>
                           <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>Max CPU</p>
-                          <p className="text-lg font-mono font-semibold" style={{ color: s.max_cpu > 100 ? 'var(--color-danger)' : 'var(--color-text-primary)' }}>
-                            {formatPercent(s.max_cpu)}
-                          </p>
+                          <div className="flex items-baseline gap-1.5">
+                            <p className="text-lg font-mono font-semibold" style={{ color: s.max_cpu > 100 ? 'var(--color-danger)' : 'var(--color-text-primary)' }}>
+                              {formatPercent(s.max_cpu)}
+                            </p>
+                            <RecommendHint value={s.max_cpu} label="Recommend limit" />
+                          </div>
                         </div>
+                        {/* Avg RAM */}
                         <div>
                           <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>Avg RAM</p>
-                          <p className="text-lg font-mono font-semibold" style={{ color: 'var(--color-accent-ram)' }}>
-                            {formatPercent(s.avg_ram)}
-                          </p>
+                          <div className="flex items-baseline gap-1.5">
+                            <p className="text-lg font-mono font-semibold" style={{ color: 'var(--color-accent-ram)' }}>
+                              {formatPercent(s.avg_ram)}
+                            </p>
+                            <RecommendHint value={s.avg_ram} label="Recommend request" />
+                          </div>
                         </div>
+                        {/* Max RAM */}
                         <div>
                           <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>Max RAM</p>
-                          <p className="text-lg font-mono font-semibold" style={{ color: s.max_ram > 100 ? 'var(--color-danger)' : 'var(--color-text-primary)' }}>
-                            {formatPercent(s.max_ram)}
-                          </p>
+                          <div className="flex items-baseline gap-1.5">
+                            <p className="text-lg font-mono font-semibold" style={{ color: s.max_ram > 100 ? 'var(--color-danger)' : 'var(--color-text-primary)' }}>
+                              {formatPercent(s.max_ram)}
+                            </p>
+                            <RecommendHint value={s.max_ram} label="Recommend limit" />
+                          </div>
                         </div>
                       </div>
                     </div>
