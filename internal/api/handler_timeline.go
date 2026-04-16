@@ -23,8 +23,14 @@ func (s *Server) handleTimeline(w http.ResponseWriter, r *http.Request) {
 		start = end.Add(-1 * time.Hour)
 	case "6h":
 		start = end.Add(-6 * time.Hour)
-	case "24h":
+	case "12h":
+		start = end.Add(-12 * time.Hour)
+	case "1d":
 		start = end.Add(-24 * time.Hour)
+	case "3d":
+		start = end.Add(-3 * 24 * time.Hour)
+	case "5d":
+		start = end.Add(-5 * 24 * time.Hour)
 	case "7d":
 		start = end.Add(-7 * 24 * time.Hour)
 	default:

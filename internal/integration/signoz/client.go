@@ -73,20 +73,37 @@ func (c *Client) QueryTraces(namespace, deployment string, start, end time.Time,
 }
 
 // CorrelateSpike correlates a spike with trace data to find the culprit route.
-func (c *Client) CorrelateSpike(namespace, deployment string, spikeTime time.Time, windowMinutes int) (*domain.CorrelationResult, error) {
-	if windowMinutes <= 0 {
-		windowMinutes = 5
+func (c *Client) CorrelateSpike(namespace, deployment string, spikeTime time.Time, windowSeconds int) (*domain.CorrelationResult, error) {
+	if windowSeconds <= 0 {
+		windowSeconds = 5
 	}
 
-	start := spikeTime.Add(-time.Duration(windowMinutes) * time.Second)
-	end := spikeTime.Add(time.Duration(windowMinutes) * time.Second)
+	maxWindowSeconds := 60
+	stepSeconds := 5
 
-	traces, err := c.QueryTraces(namespace, deployment, start, end, 500)
-	if err != nil {
-		return nil, err
+	var traces []TraceRow
+	var err error
+
+	// Progressively widen the time window until we find traces or hit 60s max
+	for currentWindow := windowSeconds; currentWindow <= maxWindowSeconds; currentWindow += stepSeconds {
+		start := spikeTime.Add(-time.Duration(currentWindow) * time.Second)
+		end := spikeTime.Add(time.Duration(currentWindow) * time.Second)
+
+		traces, err = c.QueryTraces(namespace, deployment, start, end, 500)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(traces) > 0 {
+			log.Printf("[SigNoz] Found %d traces with ±%ds window", len(traces), currentWindow)
+			break
+		}
+
+		log.Printf("[SigNoz] No traces found with ±%ds window, expanding...", currentWindow)
 	}
 
 	if len(traces) == 0 {
+		log.Printf("[SigNoz] No traces found after expanding to ±%ds, giving up", maxWindowSeconds)
 		return &domain.CorrelationResult{
 			FoundTraces: false,
 			TraceCount:  0,
