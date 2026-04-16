@@ -1,7 +1,14 @@
 const API_BASE = '/api/v1';
 
 async function fetchJSON(url, options = {}) {
-  const response = await fetch(`${API_BASE}${url}`, {
+  const activeDatasource = localStorage.getItem('activeDatasource');
+  let finalUrl = url;
+  if (activeDatasource && !url.includes('datasource=')) {
+    const separator = url.includes('?') ? '&' : '?';
+    finalUrl = `${url}${separator}datasource=${encodeURIComponent(activeDatasource)}`;
+  }
+
+  const response = await fetch(`${API_BASE}${finalUrl}`, {
     headers: { 'Content-Type': 'application/json' },
     ...options,
   });
@@ -13,6 +20,9 @@ async function fetchJSON(url, options = {}) {
 }
 
 export const api = {
+  // Datasources
+  getDatasources: () => fetchJSON('/datasources'),
+
   // Timeline
   getTimeline: (timeRange = '1h', deploymentName = '') => {
     const params = new URLSearchParams({ time_range: timeRange });

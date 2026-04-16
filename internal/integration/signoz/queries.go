@@ -6,10 +6,15 @@ import (
 )
 
 // BuildTraceQuery returns a ClickHouse SQL query for fetching traces
-// filtered by namespace and deployment during a specific time window.
-func BuildTraceQuery(namespace, deployment string, start, end time.Time, limit int) string {
+// filtered by envTag, namespace and deployment during a specific time window.
+func BuildTraceQuery(envTag, namespace, deployment string, start, end time.Time, limit int) string {
 	startNano := start.UnixNano()
 	endNano := end.UnixNano()
+
+	envFilter := ""
+	if envTag != "" {
+		envFilter = fmt.Sprintf(`AND resources_string['deployment.environment'] = '%s'`, envTag)
+	}
 
 	deploymentFilter := ""
 	if deployment != "" {
@@ -32,18 +37,24 @@ FROM signoz_traces.distributed_signoz_index_v3
 WHERE timestamp >= toDateTime64(%d / 1000000000, 9)
   AND timestamp <= toDateTime64(%d / 1000000000, 9)
   AND resources_string['k8s.namespace.name'] = '%s'
+  %s
   AND http_method != ''
   %s
 ORDER BY timestamp DESC
 LIMIT %d`,
-		startNano, endNano, namespace, deploymentFilter, limit)
+		startNano, endNano, namespace, envFilter, deploymentFilter, limit)
 }
 
 // BuildRouteAggregationQuery returns a ClickHouse SQL query for aggregating
 // trace data by route during a spike window.
-func BuildRouteAggregationQuery(namespace, deployment string, start, end time.Time) string {
+func BuildRouteAggregationQuery(envTag, namespace, deployment string, start, end time.Time) string {
 	startNano := start.UnixNano()
 	endNano := end.UnixNano()
+
+	envFilter := ""
+	if envTag != "" {
+		envFilter = fmt.Sprintf(`AND resources_string['deployment.environment'] = '%s'`, envTag)
+	}
 
 	deploymentFilter := ""
 	if deployment != "" {
@@ -61,9 +72,10 @@ WHERE timestamp >= toDateTime64(%d / 1000000000, 9)
   AND timestamp <= toDateTime64(%d / 1000000000, 9)
   AND resources_string['k8s.namespace.name'] = '%s'
   %s
+  %s
   AND resources_string['http.url'] != ''
 GROUP BY route
 ORDER BY total_duration_ms DESC
 LIMIT 20`,
-		startNano, endNano, namespace, deploymentFilter)
+		startNano, endNano, namespace, envFilter, deploymentFilter)
 }

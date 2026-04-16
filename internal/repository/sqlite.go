@@ -11,7 +11,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const schemaVersion = 2
+const schemaVersion = 3
 
 // DB wraps the SQLite database connection.
 type DB struct {
@@ -82,6 +82,7 @@ func (db *DB) migrate() error {
 	}{
 		{1, migrationV1},
 		{2, migrationV2},
+		{3, migrationV3},
 	}
 
 	for _, m := range migrations {
@@ -190,4 +191,10 @@ CREATE TABLE IF NOT EXISTS metrics_cache (
 CREATE INDEX IF NOT EXISTS idx_metrics_cache_deployment ON metrics_cache(deployment_name);
 CREATE INDEX IF NOT EXISTS idx_metrics_cache_timestamp ON metrics_cache(timestamp);
 CREATE INDEX IF NOT EXISTS idx_metrics_cache_created_at ON metrics_cache(created_at);
+`
+
+// Migration V3: Add datasource support
+const migrationV3 = `
+ALTER TABLE spike_events ADD COLUMN datasource TEXT NOT NULL DEFAULT 'default';
+CREATE INDEX IF NOT EXISTS idx_spike_events_datasource ON spike_events(datasource);
 `

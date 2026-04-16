@@ -11,11 +11,7 @@ func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 			"host": s.cfg.App.Host,
 			"port": s.cfg.App.Port,
 		},
-		"prometheus": map[string]interface{}{
-			"url":                        s.cfg.Prometheus.URL,
-			"timeout":                    s.cfg.Prometheus.Timeout.String(),
-			"use_deployment_aggregation": s.cfg.Prometheus.UseDeploymentAggregation,
-		},
+		"datasources": s.cfg.Datasources,
 		"detection": map[string]interface{}{
 			"cpu_threshold":                    s.cfg.Detection.CPUThreshold,
 			"memory_threshold":                 s.cfg.Detection.MemoryThreshold,
@@ -33,13 +29,8 @@ func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 			"type": s.cfg.Database.Type,
 			"path": s.cfg.Database.Path,
 		},
-		"namespaces":              s.cfg.Namespaces,
-		"deploy_exclude_patterns": s.cfg.DeployExcludePatterns,
 		"discord": map[string]interface{}{
 			"enabled": s.cfg.Discord.Enabled,
-		},
-		"gcloud": map[string]interface{}{
-			"profiler_enabled": s.cfg.GCloud.ProfilerEnabled,
 		},
 	})
 }

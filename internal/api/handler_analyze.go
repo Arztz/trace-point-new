@@ -66,6 +66,7 @@ func (s *Server) handleAnalyzeSpikes(w http.ResponseWriter, r *http.Request) {
 		Start:          start,
 		End:            end,
 		Window:         window,
+		Datasource:     q.Get("datasource"),
 		Namespace:      q.Get("namespace"),
 		DeploymentName: q.Get("deployment"),
 		Threshold:      threshold,
@@ -73,7 +74,13 @@ func (s *Server) handleAnalyzeSpikes(w http.ResponseWriter, r *http.Request) {
 		Offset:         offset,
 	}
 
-	result, err := s.analyzer.Analyze(req)
+	inst, _, err := s.getInstance(r)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	result, err := inst.Analyzer.Analyze(req)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Analysis failed: "+err.Error())
 		return

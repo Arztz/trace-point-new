@@ -10,6 +10,7 @@ import (
 
 func (s *Server) handleListSpikes(w http.ResponseWriter, r *http.Request) {
 	filter := domain.SpikeListFilter{
+		Datasource:     r.URL.Query().Get("datasource"),
 		Namespace:      r.URL.Query().Get("namespace"),
 		DeploymentName: r.URL.Query().Get("deployment"),
 		Sort:           r.URL.Query().Get("sort"),
@@ -94,7 +95,13 @@ func (s *Server) handleRetrySpikeCorrelation(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	event, err := s.correlator.RetryCorrelation(r.Context(), id)
+	inst, _, err := s.getInstance(r)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	event, err := inst.Correlator.RetryCorrelation(r.Context(), id)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to retry correlation: "+err.Error())
 		return

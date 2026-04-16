@@ -36,10 +36,11 @@ type Detector struct {
 	onSpike      func(event *domain.SpikeEvent) // callback when spike detected
 	ctx          context.Context
 	cancel       context.CancelFunc
+	datasource   string
 }
 
 // NewDetector creates a new spike detection engine.
-func NewDetector(cfg *config.Config, promClient *prometheus.Client, correlator *Correlator) *Detector {
+func NewDetector(cfg *config.Config, promClient *prometheus.Client, correlator *Correlator, datasource string) *Detector {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Detector{
 		cfg:        cfg,
@@ -48,6 +49,7 @@ func NewDetector(cfg *config.Config, promClient *prometheus.Client, correlator *
 		states:     make(map[string]*DeploymentState),
 		ctx:        ctx,
 		cancel:     cancel,
+		datasource: datasource,
 	}
 }
 
@@ -92,9 +94,17 @@ func (d *Detector) poll() {
 	}
 
 	now := time.Now()
+	
+	var dsCfg *config.DatasourceConfig
+	for i := range d.cfg.Datasources {
+		if d.cfg.Datasources[i].Name == d.datasource {
+			dsCfg = &d.cfg.Datasources[i]
+			break
+		}
+	}
 
 	for _, m := range metrics {
-		if d.cfg.ShouldExcludeDeployment(m.DeploymentName) {
+		if dsCfg != nil && dsCfg.ShouldExcludeDeployment(m.DeploymentName) {
 			continue
 		}
 
@@ -168,6 +178,7 @@ func (d *Detector) poll() {
 
 		event := &domain.SpikeEvent{
 			Timestamp:            now,
+			Datasource:           d.datasource,
 			DeploymentName:       m.DeploymentName,
 			Namespace:            m.Namespace,
 			CPUUsagePercent:      m.CPUPercent,

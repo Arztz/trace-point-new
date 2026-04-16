@@ -73,9 +73,14 @@ func (c *Client) SendSpikeAlert(event *domain.SpikeEvent) error {
 		severity = "WARNING"
 	}
 
-	title := fmt.Sprintf("[%s] Resource Spike Detected - %s", severity, event.DeploymentName)
+	title := fmt.Sprintf("[%s - %s] Resource Spike Detected - %s", severity, event.Datasource, event.DeploymentName)
 
 	fields := []EmbedField{
+		{
+			Name:   "🌐 Datasource",
+			Value:  fmt.Sprintf("`%s`", event.Datasource),
+			Inline: false,
+		},
 		{
 			Name:   "🎯 Deployment",
 			Value:  fmt.Sprintf("`%s`", event.DeploymentName),

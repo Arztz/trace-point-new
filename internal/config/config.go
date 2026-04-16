@@ -12,19 +12,24 @@ import (
 
 // Config holds the entire application configuration.
 type Config struct {
-	App       AppConfig       `yaml:"app"`
-	Prometheus PrometheusConfig `yaml:"prometheus"`
-	Signoz    SignozConfig    `yaml:"signoz"`
-	GCloud    GCloudConfig    `yaml:"gcloud"`
-	Detection DetectionConfig `yaml:"detection"`
-	Timeline  TimelineConfig  `yaml:"timeline"`
-	Discord   DiscordConfig   `yaml:"discord"`
-	Database  DatabaseConfig  `yaml:"database"`
-	Namespaces []string       `yaml:"namespaces"`
-	DeployExcludePatterns []string `yaml:"deploy_exclude_patterns"`
+	App         AppConfig         `yaml:"app"`
+	Datasources []DatasourceConfig `yaml:"datasources"`
+	Detection   DetectionConfig   `yaml:"detection"`
+	Timeline    TimelineConfig    `yaml:"timeline"`
+	Discord     DiscordConfig     `yaml:"discord"`
+	Database    DatabaseConfig    `yaml:"database"`
+}
 
+type DatasourceConfig struct {
+	Name                    string           `yaml:"name"`
+	Prometheus              PrometheusConfig `yaml:"prometheus"`
+	Signoz                  SignozConfig     `yaml:"signoz"`
+	GCloud                  GCloudConfig     `yaml:"gcloud"`
+	Namespaces              []string         `yaml:"namespaces"`
+	DeployExcludePatterns   []string         `yaml:"deploy_exclude_patterns"`
+	
 	// Compiled regex patterns (not from YAML)
-	compiledExcludePatterns []*regexp.Regexp
+	CompiledExcludePatterns []*regexp.Regexp `yaml:"-"`
 }
 
 type AppConfig struct {
@@ -44,10 +49,12 @@ type SignozConfig struct {
 	Password string        `yaml:"password"`
 	Timeout  time.Duration `yaml:"timeout"`
 	Database string        `yaml:"database"`
+	EnvTag   string        `yaml:"env_tag"`
 }
 
 type GCloudConfig struct {
 	ProjectID       string `yaml:"project_id"`
+	EnvVersionTag   string `yaml:"env_version_tag"`
 	ProfilerEnabled bool   `yaml:"profiler_enabled"`
 }
 
@@ -125,17 +132,21 @@ func (c *Config) setDefaults() {
 	if c.App.Port == 0 {
 		c.App.Port = 8088
 	}
-	if c.Prometheus.Timeout == 0 {
-		c.Prometheus.Timeout = 30 * time.Second
-	}
-	// Always use deployment aggregation
-	c.Prometheus.UseDeploymentAggregation = true
+	
+	for i := range c.Datasources {
+		ds := &c.Datasources[i]
+		if ds.Prometheus.Timeout == 0 {
+			ds.Prometheus.Timeout = 30 * time.Second
+		}
+		// Always use deployment aggregation
+		ds.Prometheus.UseDeploymentAggregation = true
 
-	if c.Signoz.Timeout == 0 {
-		c.Signoz.Timeout = 30 * time.Second
-	}
-	if c.Signoz.Database == "" {
-		c.Signoz.Database = "signoz_traces"
+		if ds.Signoz.Timeout == 0 {
+			ds.Signoz.Timeout = 30 * time.Second
+		}
+		if ds.Signoz.Database == "" {
+			ds.Signoz.Database = "signoz_traces"
+		}
 	}
 	if c.Detection.CPUThreshold == 0 {
 		c.Detection.CPUThreshold = 80
@@ -179,30 +190,41 @@ func (c *Config) setDefaults() {
 }
 
 func (c *Config) validate() error {
-	if c.Prometheus.URL == "" {
-		return fmt.Errorf("prometheus.url is required")
+	if len(c.Datasources) == 0 {
+		return fmt.Errorf("at least one datasource must be configured")
 	}
-	if len(c.Namespaces) == 0 {
-		return fmt.Errorf("at least one namespace must be configured")
+	for i, ds := range c.Datasources {
+		if ds.Name == "" {
+			return fmt.Errorf("datasource %d must have a name", i)
+		}
+		if ds.Prometheus.URL == "" {
+			return fmt.Errorf("datasource %s prometheus.url is required", ds.Name)
+		}
+		if len(ds.Namespaces) == 0 {
+			return fmt.Errorf("datasource %s requires at least one namespace", ds.Name)
+		}
 	}
 	return nil
 }
 
 func (c *Config) compilePatterns() error {
-	c.compiledExcludePatterns = make([]*regexp.Regexp, 0, len(c.DeployExcludePatterns))
-	for _, pattern := range c.DeployExcludePatterns {
-		re, err := regexp.Compile(pattern)
-		if err != nil {
-			return fmt.Errorf("invalid exclude pattern %q: %w", pattern, err)
+	for i := range c.Datasources {
+		ds := &c.Datasources[i]
+		ds.CompiledExcludePatterns = make([]*regexp.Regexp, 0, len(ds.DeployExcludePatterns))
+		for _, pattern := range ds.DeployExcludePatterns {
+			re, err := regexp.Compile(pattern)
+			if err != nil {
+				return fmt.Errorf("invalid exclude pattern %q in datasource %s: %w", pattern, ds.Name, err)
+			}
+			ds.CompiledExcludePatterns = append(ds.CompiledExcludePatterns, re)
 		}
-		c.compiledExcludePatterns = append(c.compiledExcludePatterns, re)
 	}
 	return nil
 }
 
-// ShouldExcludeDeployment checks if a deployment name matches any exclude pattern.
-func (c *Config) ShouldExcludeDeployment(name string) bool {
-	for _, re := range c.compiledExcludePatterns {
+// ShouldExcludeDeployment checks if a deployment name matches any exclude pattern for a specific datasource.
+func (ds *DatasourceConfig) ShouldExcludeDeployment(name string) bool {
+	for _, re := range ds.CompiledExcludePatterns {
 		if re.MatchString(name) {
 			return true
 		}
@@ -215,7 +237,7 @@ func (c *Config) GetListenAddr() string {
 	return fmt.Sprintf("%s:%d", c.App.Host, c.App.Port)
 }
 
-// GetNamespacesRegex returns namespaces joined as a regex alternation.
-func (c *Config) GetNamespacesRegex() string {
-	return strings.Join(c.Namespaces, "|")
+// GetNamespacesRegex returns namespaces joined as a regex alternation for a specific datasource.
+func (ds *DatasourceConfig) GetNamespacesRegex() string {
+	return strings.Join(ds.Namespaces, "|")
 }
