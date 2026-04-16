@@ -171,7 +171,9 @@ func (d *Detector) poll() {
 			DeploymentName:       m.DeploymentName,
 			Namespace:            m.Namespace,
 			CPUUsagePercent:      m.CPUPercent,
+			CPULimitPercent:      cpuThreshold,
 			RAMUsagePercent:      m.RAMPercent,
+			RAMLimitPercent:      ramThreshold,
 			ThresholdPercent:     d.cfg.Detection.CPUThreshold,
 			MovingAveragePercent: movingAvg,
 		}

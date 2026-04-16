@@ -16,7 +16,7 @@ signoz:
 
 gcloud:
   project_id: "fundii-production"
-  profiler_enabled: true
+  profiler_enabled: false
 
 detection:
   cpu_threshold: 80
