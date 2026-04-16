@@ -50,33 +50,7 @@ func main() {
 	// Create repositories
 	spikeRepo := repository.NewSpikeRepo(db)
 
-	// Create integration clients
-	promClient := prometheus.NewClient(
-		cfg.Prometheus.URL,
-		cfg.Prometheus.Timeout,
-		cfg.Namespaces,
-	)
-	log.Printf("✅ Prometheus client configured: %s", cfg.Prometheus.URL)
-
-	signozClient := signoz.NewClient(
-		cfg.Signoz.URL,
-		cfg.Signoz.Database,
-		cfg.Signoz.User,
-		cfg.Signoz.Password,
-		cfg.Signoz.Timeout,
-	)
-	log.Printf("✅ SigNoz/ClickHouse client configured: %s", cfg.Signoz.URL)
-
-	profilerClient := profiler.NewClient(
-		cfg.GCloud.ProjectID,
-		cfg.GCloud.ProfilerEnabled,
-	)
-	if profilerClient.IsEnabled() {
-		log.Printf("✅ GCP Cloud Profiler enabled for project: %s", cfg.GCloud.ProjectID)
-	} else {
-		log.Printf("⚠️  GCP Cloud Profiler disabled")
-	}
-
+	// Global Discord client
 	discordClient := discord.NewClient(
 		cfg.Discord.WebhookURL,
 		cfg.Discord.Enabled,
@@ -87,24 +61,62 @@ func main() {
 		log.Printf("⚠️  Discord webhook disabled")
 	}
 
-	// Create services
+	// Global services
 	alerter := service.NewAlerter(cfg, discordClient, spikeRepo)
-	correlator := service.NewCorrelator(cfg, signozClient, profilerClient, spikeRepo, alerter)
-	analyzer := service.NewAnalyzer(cfg, promClient)
 	gravity := service.NewGravityCalculator(spikeRepo)
 
-	// Create spike detector
-	detector := service.NewDetector(cfg, promClient, correlator)
-	detector.SetOnSpike(func(event *domain.SpikeEvent) {
-		correlator.HandleSpike(event)
-	})
+	// Map of instances for API routing
+	instances := make(map[string]*api.DatasourceInstance)
+	var detectors []*service.Detector
 
-	// Start spike detection goroutine
-	go detector.Start()
-	log.Printf("✅ Spike detector started (interval=%ds)", cfg.Detection.PollingIntervalSeconds)
+	for i := range cfg.Datasources {
+		ds := &cfg.Datasources[i]
+		log.Printf("🚀 Initializing datasource: %s", ds.Name)
+
+		promClient := prometheus.NewClient(
+			ds.Prometheus.URL,
+			ds.Prometheus.Timeout,
+			ds.Namespaces,
+		)
+
+		signozClient := signoz.NewClient(
+			ds.Signoz.URL,
+			ds.Signoz.Database,
+			ds.Signoz.User,
+			ds.Signoz.Password,
+			ds.Signoz.EnvTag,
+			ds.Signoz.Timeout,
+		)
+
+		profilerClient := profiler.NewClient(
+			ds.GCloud.ProjectID,
+			ds.GCloud.EnvVersionTag,
+			ds.GCloud.ProfilerEnabled,
+		)
+
+		correlator := service.NewCorrelator(cfg, signozClient, profilerClient, spikeRepo, alerter)
+		analyzer := service.NewAnalyzer(cfg, promClient)
+
+		detector := service.NewDetector(cfg, promClient, correlator, ds.Name)
+		detector.SetOnSpike(func(event *domain.SpikeEvent) {
+			correlator.HandleSpike(event)
+		})
+
+		instances[ds.Name] = &api.DatasourceInstance{
+			PromClient: promClient,
+			Analyzer:   analyzer,
+			Correlator: correlator,
+		}
+		
+		detectors = append(detectors, detector)
+
+		// Start spike detection goroutine for this datasource
+		go detector.Start()
+		log.Printf("✅ Spike detector started for %s (interval=%ds)", ds.Name, cfg.Detection.PollingIntervalSeconds)
+	}
 
 	// Create API server
-	server := api.NewServer(cfg, spikeRepo, promClient, analyzer, gravity, correlator)
+	server := api.NewServer(cfg, spikeRepo, gravity, instances)
 
 	// Start HTTP server
 	addr := cfg.GetListenAddr()
@@ -124,7 +136,9 @@ func main() {
 
 		log.Printf("⏹️  Received signal %s, shutting down...", sig)
 
-		detector.Stop()
+		for _, d := range detectors {
+			d.Stop()
+		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()

@@ -2,21 +2,50 @@ app:
   host: "0.0.0.0"
   port: 8088
 
-prometheus:
-  url: "http://prod.prometheus.fundii-prod.internal"
-  timeout: 30s
-  use_deployment_aggregation: true
+datasources:
+  - name: "fundii-dev"
+    prometheus:
+      url: "http://dev.prometheus.fundii-nonprod.internal"
+      timeout: 30s
+      use_deployment_aggregation: true
+    signoz:
+      url: "http://localhost:37357"
+      user: "default"
+      password: "REDACTED" # Fill out your ClickHouse password here
+      timeout: 30s
+      database: "signoz_traces"
+      env_tag: "dev"
+    gcloud:
+      project_id: "fundii-production"
+      env_version_tag: "develop"
+      profiler_enabled: false
+    namespaces:
+      - "fundii"
+    deploy_exclude_patterns:
+      - "^kube-"
+      - "^system-"
 
-signoz:
-  url: "http://localhost:37357"
-  user: "default"
-  password: "REDACTED" # Fill out your ClickHouse password here
-  timeout: 30s
-  database: "signoz_traces"
-
-gcloud:
-  project_id: "fundii-production"
-  profiler_enabled: false
+  - name: "fundii-prod"
+    prometheus:
+      url: "http://prod.prometheus.fundii-prod.internal"
+      timeout: 30s
+      use_deployment_aggregation: true
+    signoz:
+      url: "http://localhost:37357"
+      user: "default"
+      password: "REDACTED"
+      timeout: 30s
+      database: "signoz_traces"
+      env_tag: "prod"
+    gcloud:
+      project_id: "fundii-production"
+      env_version_tag: "v"
+      profiler_enabled: false
+    namespaces:
+      - "fundii"
+    deploy_exclude_patterns:
+      - "^kube-"
+      - "^system-"
 
 detection:
   cpu_threshold: 80
@@ -39,9 +68,4 @@ database:
   type: "sqlite"
   path: "./data/trace-point.db"
 
-namespaces:
-  - "fundii"
 
-deploy_exclude_patterns:
-  - "^kube-"
-  - "^system-"

@@ -6,7 +6,13 @@ import (
 )
 
 func (s *Server) handleGravityScores(w http.ResponseWriter, r *http.Request) {
-	scores, err := s.gravity.CalculateScores(7)
+	_, dsName, err := s.getInstance(r)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	scores, err := s.gravity.CalculateScores(dsName, 7)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to calculate gravity scores: "+err.Error())
 		return

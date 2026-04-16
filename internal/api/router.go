@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -13,33 +14,34 @@ import (
 	"github.com/trace-point/trace-point-renew/internal/service"
 )
 
+// DatasourceInstance holds the specific dependencies for a single datasource.
+type DatasourceInstance struct {
+	PromClient *prometheus.Client
+	Analyzer   *service.Analyzer
+	Correlator *service.Correlator
+}
+
 // Server holds the API server dependencies.
 type Server struct {
 	cfg        *config.Config
 	router     chi.Router
 	spikeRepo  *repository.SpikeRepo
-	promClient *prometheus.Client
-	analyzer   *service.Analyzer
 	gravity    *service.GravityCalculator
-	correlator *service.Correlator
+	instances  map[string]*DatasourceInstance
 }
 
 // NewServer creates a new API server with all routes configured.
 func NewServer(
 	cfg *config.Config,
 	spikeRepo *repository.SpikeRepo,
-	promClient *prometheus.Client,
-	analyzer *service.Analyzer,
 	gravity *service.GravityCalculator,
-	correlator *service.Correlator,
+	instances map[string]*DatasourceInstance,
 ) *Server {
 	s := &Server{
-		cfg:        cfg,
-		spikeRepo:  spikeRepo,
-		promClient: promClient,
-		analyzer:   analyzer,
-		gravity:    gravity,
-		correlator: correlator,
+		cfg:       cfg,
+		spikeRepo: spikeRepo,
+		gravity:   gravity,
+		instances: instances,
 	}
 
 	r := chi.NewRouter()
@@ -58,6 +60,8 @@ func NewServer(
 	// API v1 routes
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/", s.handleAPIInfo)
+		
+		r.Get("/datasources", s.handleDatasources)
 
 		// Spike events
 		r.Get("/spikes", s.handleListSpikes)
@@ -89,4 +93,22 @@ func NewServer(
 // Router returns the chi router for HTTP serving.
 func (s *Server) Router() chi.Router {
 	return s.router
+}
+
+// getInstance returns the DatasourceInstance from the query param or the first available.
+func (s *Server) getInstance(r *http.Request) (*DatasourceInstance, string, error) {
+	dsName := r.URL.Query().Get("datasource")
+	if dsName != "" {
+		if ds, ok := s.instances[dsName]; ok {
+			return ds, dsName, nil
+		}
+		return nil, "", fmt.Errorf("datasource %q not found", dsName)
+	}
+
+	// Default to first available if none specified
+	for name, ds := range s.instances {
+		return ds, name, nil
+	}
+
+	return nil, "", fmt.Errorf("no datasources configured")
 }

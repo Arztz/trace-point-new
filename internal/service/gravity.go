@@ -30,12 +30,12 @@ func NewGravityCalculator(spikeRepo *repository.SpikeRepo) *GravityCalculator {
 
 // CalculateScores computes Resource Gravity Scores for all services/routes.
 // Formula: Score = Resource Peak × (1 / Request Frequency)
-func (g *GravityCalculator) CalculateScores(days int) ([]domain.GravityScore, error) {
+func (g *GravityCalculator) CalculateScores(datasource string, days int) ([]domain.GravityScore, error) {
 	if days <= 0 {
 		days = 7
 	}
 
-	events, err := g.spikeRepo.GetSpikesForGravity(days)
+	events, err := g.spikeRepo.GetSpikesForGravity(datasource, days)
 	if err != nil {
 		return nil, err
 	}
@@ -161,8 +161,8 @@ func (g *GravityCalculator) CalculateScores(days int) ([]domain.GravityScore, er
 }
 
 // GenerateRefactoringReport generates a refactoring export with recommendations.
-func (g *GravityCalculator) GenerateRefactoringReport(days int) (*domain.RefactoringExport, error) {
-	scores, err := g.CalculateScores(days)
+func (g *GravityCalculator) GenerateRefactoringReport(datasource string, days int) (*domain.RefactoringExport, error) {
+	scores, err := g.CalculateScores(datasource, days)
 	if err != nil {
 		return nil, err
 	}

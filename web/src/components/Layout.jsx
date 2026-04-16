@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import DatasourceSelector from './DatasourceSelector';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: '📊' },
@@ -26,6 +27,11 @@ export default function Layout() {
             <h1 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Trace-Point</h1>
             <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>v1.0.3</p>
           </div>
+        </div>
+
+        {/* Datasource Selector */}
+        <div className="px-5 py-3 border-b border-white/5">
+          <DatasourceSelector />
         </div>
 
         {/* Navigation */}
