@@ -33,11 +33,11 @@ func NewAlerter(cfg *config.Config, discordClient *discord.Client, spikeRepo *re
 // Alert sends a spike alert to Discord, respecting cooldown periods.
 func (a *Alerter) Alert(event *domain.SpikeEvent) error {
 	if !a.discordClient.IsEnabled() {
-		log.Printf("[Alerter] Discord disabled, skipping alert for %s/%s", event.Namespace, event.DeploymentName)
+		log.Printf("[Alerter] Discord disabled, skipping alert for %s/%s/%s", event.Datasource, event.Namespace, event.DeploymentName)
 		return nil
 	}
 
-	key := event.Namespace + "/" + event.DeploymentName
+	key := event.Datasource + "/" + event.Namespace + "/" + event.DeploymentName
 
 	// Check cooldown
 	a.mu.RLock()

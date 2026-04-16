@@ -6,6 +6,7 @@ import "time"
 type SpikeEvent struct {
 	ID                   string     `json:"id"`
 	Timestamp            time.Time  `json:"timestamp"`
+	Datasource           string     `json:"datasource"`
 	DeploymentName       string     `json:"deployment_name"`
 	Namespace            string     `json:"namespace"`
 	CPUUsagePercent      float64    `json:"cpu_usage_percent"`
@@ -48,6 +49,7 @@ type HistoricalSpike struct {
 
 // SpikeListFilter holds query parameters for listing spikes.
 type SpikeListFilter struct {
+	Datasource     string `json:"datasource"`
 	Namespace      string `json:"namespace"`
 	DeploymentName string `json:"deployment_name"`
 	Limit          int    `json:"limit"`
@@ -61,6 +63,7 @@ type SpikeAnalysisRequest struct {
 	Start          time.Time `json:"start"`
 	End            time.Time `json:"end"`
 	Window         string    `json:"window"` // "5m", "15m", "30m", "1h"
+	Datasource     string    `json:"datasource"`
 	Namespace      string    `json:"namespace"`
 	DeploymentName string    `json:"deployment_name"`
 	Threshold      float64   `json:"threshold"`

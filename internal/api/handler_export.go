@@ -6,7 +6,13 @@ import (
 )
 
 func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
-	events, err := s.spikeRepo.GetAllForExport(7)
+	_, dsName, err := s.getInstance(r)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	events, err := s.spikeRepo.GetAllForExport(dsName, 7)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to export data: "+err.Error())
 		return
@@ -22,7 +28,13 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleExportRefactoring(w http.ResponseWriter, r *http.Request) {
-	report, err := s.gravity.GenerateRefactoringReport(7)
+	_, dsName, err := s.getInstance(r)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	report, err := s.gravity.GenerateRefactoringReport(dsName, 7)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to generate refactoring report: "+err.Error())
 		return

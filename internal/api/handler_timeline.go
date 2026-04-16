@@ -37,8 +37,14 @@ func (s *Server) handleTimeline(w http.ResponseWriter, r *http.Request) {
 		start = end.Add(-1 * time.Hour)
 	}
 
+	inst, dsName, err := s.getInstance(r)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	// Fetch timeline metrics from Prometheus
-	metrics, err := s.promClient.QueryTimelineMetrics(start, end, deploymentFilter)
+	metrics, err := inst.PromClient.QueryTimelineMetrics(start, end, deploymentFilter)
 	if err != nil {
 		log.Printf("[Timeline] Failed to query metrics: %v", err)
 		respondError(w, http.StatusInternalServerError, "Failed to query timeline metrics")
@@ -46,7 +52,7 @@ func (s *Server) handleTimeline(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get available deployments
-	deployments, err := s.promClient.GetAvailableDeployments()
+	deployments, err := inst.PromClient.GetAvailableDeployments()
 	if err != nil {
 		log.Printf("[Timeline] Failed to get available deployments: %v", err)
 		// Continue with empty list
@@ -55,9 +61,10 @@ func (s *Server) handleTimeline(w http.ResponseWriter, r *http.Request) {
 
 	// Get spike markers from DB
 	spikeEvents, _, err := s.spikeRepo.List(domain.SpikeListFilter{
-		Limit: 100,
-		Sort:  "time",
-		Order: "desc",
+		Datasource: dsName,
+		Limit:      100,
+		Sort:       "time",
+		Order:      "desc",
 	})
 	if err != nil {
 		log.Printf("[Timeline] Failed to get spike markers: %v", err)

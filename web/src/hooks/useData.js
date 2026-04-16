@@ -1,6 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../utils/api';
 
+export function useDatasources() {
+  return useQuery({
+    queryKey: ['datasources'],
+    queryFn: () => api.getDatasources(),
+    staleTime: Infinity,
+  });
+}
+
 export function useTimeline(timeRange, deploymentName) {
   return useQuery({
     queryKey: ['timeline', timeRange, deploymentName],

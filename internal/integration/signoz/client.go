@@ -20,16 +20,18 @@ type Client struct {
 	database   string
 	user       string
 	password   string
+	envTag     string
 	httpClient *http.Client
 }
 
 // NewClient creates a new SigNoz/ClickHouse client.
-func NewClient(baseURL string, database string, user string, password string, timeout time.Duration) *Client {
+func NewClient(baseURL string, database string, user string, password string, envTag string, timeout time.Duration) *Client {
 	return &Client{
 		baseURL:  strings.TrimRight(baseURL, "/"),
 		database: database,
 		user:     user,
 		password: password,
+		envTag:   envTag,
 		httpClient: &http.Client{
 			Timeout: timeout,
 		},
@@ -62,7 +64,7 @@ func (c *Client) QueryTraces(namespace, deployment string, start, end time.Time,
 		limit = 100
 	}
 
-	query := BuildTraceQuery(namespace, deployment, start, end, limit)
+	query := BuildTraceQuery(c.envTag, namespace, deployment, start, end, limit)
 
 	traces, err := c.executeQuery(query)
 	if err != nil {

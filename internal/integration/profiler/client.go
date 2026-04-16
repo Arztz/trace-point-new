@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,8 +16,9 @@ import (
 
 // Client is the GCP Cloud Profiler client.
 type Client struct {
-	projectID string
-	enabled   bool
+	projectID     string
+	envVersionTag string
+	enabled       bool
 }
 
 // ProfileResult contains the top function identified from profiling data.
@@ -26,13 +28,15 @@ type ProfileResult struct {
 	CPUPercent   float64 `json:"cpu_percent"`
 	SampleCount  int64   `json:"sample_count"`
 	ProfileType  string  `json:"profile_type"`
+	Version      string  `json:"version"`
 }
 
 // NewClient creates a new GCP Cloud Profiler client.
-func NewClient(projectID string, enabled bool) *Client {
+func NewClient(projectID string, envVersionTag string, enabled bool) *Client {
 	return &Client{
-		projectID: projectID,
-		enabled:   enabled,
+		projectID:     projectID,
+		envVersionTag: envVersionTag,
+		enabled:       enabled,
 	}
 }
 
@@ -56,6 +60,26 @@ func (c *Client) GetCulpritFunction(ctx context.Context, serviceName string, sta
 	if len(profiles) == 0 {
 		log.Printf("[Profiler] No profiles found for service %s between %s and %s", serviceName, start, end)
 		return nil, nil
+	}
+
+	// Filter for latest semver if envVersionTag is "v"
+	if c.envVersionTag == "v" {
+		var latest string
+		for _, p := range profiles {
+			if latest == "" || compareSemver(p.Version, latest) > 0 {
+				latest = p.Version
+			}
+		}
+
+		if latest != "" {
+			var filtered []ProfileResult
+			for _, p := range profiles {
+				if p.Version == latest {
+					filtered = append(filtered, p)
+				}
+			}
+			profiles = filtered
+		}
 	}
 
 	// Find the profile with highest CPU consumption
@@ -95,6 +119,8 @@ func (c *Client) fetchProfiles(ctx context.Context, serviceName string, start, e
 		if err != nil {
 			return nil, fmt.Errorf("error iterating profiles: %w", err)
 		}
+		var profileVersion string
+
 		// Filter by deployment/service name FIRST since we know the target
 		if profile.Deployment != nil {
 			target := profile.Deployment.Target
@@ -102,6 +128,23 @@ func (c *Client) fetchProfiles(ctx context.Context, serviceName string, start, e
 			if !seenTargets[target] {
 				log.Printf("[Profiler] Scanned Target (First occurrence): %v", target)
 				seenTargets[target] = true
+			}
+
+			// Filter by environment/version tag if specified
+			if profile.Deployment.Labels != nil {
+				profileVersion = profile.Deployment.Labels["version"]
+			}
+
+			if c.envVersionTag != "" {
+				if c.envVersionTag == "v" {
+					if !strings.HasPrefix(profileVersion, "v") {
+						continue
+					}
+				} else {
+					if !strings.HasPrefix(profileVersion, c.envVersionTag+"-") && profileVersion != c.envVersionTag {
+						continue
+					}
+				}
 			}
 
 			// log.Printf("[Profiler] Compare Target: %v, %v", strings.ToLower(target), strings.ToLower(serviceName))
@@ -124,6 +167,7 @@ func (c *Client) fetchProfiles(ctx context.Context, serviceName string, start, e
 		// Extract profile data
 		result := ProfileResult{
 			ProfileType: profile.ProfileType.String(),
+			Version:     profileVersion,
 		}
 
 		// Use deployment information for function/file identification
@@ -147,6 +191,35 @@ func (c *Client) fetchProfiles(ctx context.Context, serviceName string, start, e
 
 	log.Printf("[Profiler] Found %d profiles for service %s", len(profiles), serviceName)
 	return profiles, nil
+}
+
+func compareSemver(v1, v2 string) int {
+	v1 = strings.TrimPrefix(v1, "v")
+	v2 = strings.TrimPrefix(v2, "v")
+
+	v1Parts := strings.Split(v1, ".")
+	v2Parts := strings.Split(v2, ".")
+
+	maxLen := len(v1Parts)
+	if len(v2Parts) > maxLen {
+		maxLen = len(v2Parts)
+	}
+
+	for i := 0; i < maxLen; i++ {
+		var n1, n2 int
+		if i < len(v1Parts) {
+			n1, _ = strconv.Atoi(v1Parts[i])
+		}
+		if i < len(v2Parts) {
+			n2, _ = strconv.Atoi(v2Parts[i])
+		}
+		if n1 < n2 {
+			return -1
+		} else if n1 > n2 {
+			return 1
+		}
+	}
+	return 0
 }
 
 // IsEnabled returns whether the profiler integration is enabled.

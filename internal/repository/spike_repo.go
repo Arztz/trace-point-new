@@ -31,14 +31,14 @@ func (r *SpikeRepo) Create(event *domain.SpikeEvent) error {
 
 	_, err := r.db.Conn().Exec(`
 		INSERT INTO spike_events (
-			id, timestamp, deployment_name, namespace,
+			id, timestamp, datasource, deployment_name, namespace,
 			cpu_usage_percent, cpu_limit_percent, ram_usage_percent, ram_limit_percent,
 			threshold_percent, moving_average_percent,
 			route_name, trace_id, culprit_function, culprit_file_path,
 			alert_sent, cooldown_end, created_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`,
-		event.ID, event.Timestamp, event.DeploymentName, event.Namespace,
+		event.ID, event.Timestamp, event.Datasource, event.DeploymentName, event.Namespace,
 		event.CPUUsagePercent, event.CPULimitPercent, event.RAMUsagePercent, event.RAMLimitPercent,
 		event.ThresholdPercent, event.MovingAveragePercent,
 		event.RouteName, event.TraceID, event.CulpritFunction, event.CulpritFilePath,
@@ -51,14 +51,14 @@ func (r *SpikeRepo) Create(event *domain.SpikeEvent) error {
 func (r *SpikeRepo) GetByID(id string) (*domain.SpikeEvent, error) {
 	event := &domain.SpikeEvent{}
 	err := r.db.Conn().QueryRow(`
-		SELECT id, timestamp, deployment_name, namespace,
+		SELECT id, timestamp, datasource, deployment_name, namespace,
 			cpu_usage_percent, cpu_limit_percent, ram_usage_percent, ram_limit_percent,
 			threshold_percent, moving_average_percent,
 			route_name, trace_id, culprit_function, culprit_file_path,
 			alert_sent, cooldown_end, created_at
 		FROM spike_events WHERE id = ?
 	`, id).Scan(
-		&event.ID, &event.Timestamp, &event.DeploymentName, &event.Namespace,
+		&event.ID, &event.Timestamp, &event.Datasource, &event.DeploymentName, &event.Namespace,
 		&event.CPUUsagePercent, &event.CPULimitPercent, &event.RAMUsagePercent, &event.RAMLimitPercent,
 		&event.ThresholdPercent, &event.MovingAveragePercent,
 		&event.RouteName, &event.TraceID, &event.CulpritFunction, &event.CulpritFilePath,
@@ -75,6 +75,10 @@ func (r *SpikeRepo) List(filter domain.SpikeListFilter) ([]domain.SpikeEvent, in
 	var conditions []string
 	var args []interface{}
 
+	if filter.Datasource != "" {
+		conditions = append(conditions, "datasource = ?")
+		args = append(args, filter.Datasource)
+	}
 	if filter.Namespace != "" {
 		conditions = append(conditions, "namespace = ?")
 		args = append(args, filter.Namespace)
@@ -124,7 +128,7 @@ func (r *SpikeRepo) List(filter domain.SpikeListFilter) ([]domain.SpikeEvent, in
 	}
 
 	query := fmt.Sprintf(`
-		SELECT id, timestamp, deployment_name, namespace,
+		SELECT id, timestamp, datasource, deployment_name, namespace,
 			cpu_usage_percent, cpu_limit_percent, ram_usage_percent, ram_limit_percent,
 			threshold_percent, moving_average_percent,
 			route_name, trace_id, culprit_function, culprit_file_path,
@@ -145,7 +149,7 @@ func (r *SpikeRepo) List(filter domain.SpikeListFilter) ([]domain.SpikeEvent, in
 	for rows.Next() {
 		var e domain.SpikeEvent
 		if err := rows.Scan(
-			&e.ID, &e.Timestamp, &e.DeploymentName, &e.Namespace,
+			&e.ID, &e.Timestamp, &e.Datasource, &e.DeploymentName, &e.Namespace,
 			&e.CPUUsagePercent, &e.CPULimitPercent, &e.RAMUsagePercent, &e.RAMLimitPercent,
 			&e.ThresholdPercent, &e.MovingAveragePercent,
 			&e.RouteName, &e.TraceID, &e.CulpritFunction, &e.CulpritFilePath,
@@ -174,20 +178,20 @@ func (r *SpikeRepo) Update(event *domain.SpikeEvent) error {
 }
 
 // GetRecentByDeployment returns the most recent spike for a deployment (for cooldown check).
-func (r *SpikeRepo) GetRecentByDeployment(deploymentName, namespace string) (*domain.SpikeEvent, error) {
+func (r *SpikeRepo) GetRecentByDeployment(datasource, deploymentName, namespace string) (*domain.SpikeEvent, error) {
 	event := &domain.SpikeEvent{}
 	err := r.db.Conn().QueryRow(`
-		SELECT id, timestamp, deployment_name, namespace,
+		SELECT id, timestamp, datasource, deployment_name, namespace,
 			cpu_usage_percent, cpu_limit_percent, ram_usage_percent, ram_limit_percent,
 			threshold_percent, moving_average_percent,
 			route_name, trace_id, culprit_function, culprit_file_path,
 			alert_sent, cooldown_end, created_at
 		FROM spike_events
-		WHERE deployment_name = ? AND namespace = ?
+		WHERE datasource = ? AND deployment_name = ? AND namespace = ?
 		ORDER BY timestamp DESC
 		LIMIT 1
-	`, deploymentName, namespace).Scan(
-		&event.ID, &event.Timestamp, &event.DeploymentName, &event.Namespace,
+	`, datasource, deploymentName, namespace).Scan(
+		&event.ID, &event.Timestamp, &event.Datasource, &event.DeploymentName, &event.Namespace,
 		&event.CPUUsagePercent, &event.CPULimitPercent, &event.RAMUsagePercent, &event.RAMLimitPercent,
 		&event.ThresholdPercent, &event.MovingAveragePercent,
 		&event.RouteName, &event.TraceID, &event.CulpritFunction, &event.CulpritFilePath,
@@ -200,19 +204,19 @@ func (r *SpikeRepo) GetRecentByDeployment(deploymentName, namespace string) (*do
 }
 
 // GetSpikesForGravity returns aggregated spike data for gravity score calculation.
-func (r *SpikeRepo) GetSpikesForGravity(days int) ([]domain.SpikeEvent, error) {
+func (r *SpikeRepo) GetSpikesForGravity(datasource string, days int) ([]domain.SpikeEvent, error) {
 	cutoff := time.Now().AddDate(0, 0, -days)
 
 	rows, err := r.db.Conn().Query(`
-		SELECT id, timestamp, deployment_name, namespace,
+		SELECT id, timestamp, datasource, deployment_name, namespace,
 			cpu_usage_percent, cpu_limit_percent, ram_usage_percent, ram_limit_percent,
 			threshold_percent, moving_average_percent,
 			route_name, trace_id, culprit_function, culprit_file_path,
 			alert_sent, cooldown_end, created_at
 		FROM spike_events
-		WHERE created_at >= ?
+		WHERE datasource = ? AND created_at >= ?
 		ORDER BY timestamp DESC
-	`, cutoff)
+	`, datasource, cutoff)
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +226,7 @@ func (r *SpikeRepo) GetSpikesForGravity(days int) ([]domain.SpikeEvent, error) {
 	for rows.Next() {
 		var e domain.SpikeEvent
 		if err := rows.Scan(
-			&e.ID, &e.Timestamp, &e.DeploymentName, &e.Namespace,
+			&e.ID, &e.Timestamp, &e.Datasource, &e.DeploymentName, &e.Namespace,
 			&e.CPUUsagePercent, &e.CPULimitPercent, &e.RAMUsagePercent, &e.RAMLimitPercent,
 			&e.ThresholdPercent, &e.MovingAveragePercent,
 			&e.RouteName, &e.TraceID, &e.CulpritFunction, &e.CulpritFilePath,
@@ -237,6 +241,6 @@ func (r *SpikeRepo) GetSpikesForGravity(days int) ([]domain.SpikeEvent, error) {
 }
 
 // GetAllForExport returns all spike events within the retention period for JSON export.
-func (r *SpikeRepo) GetAllForExport(days int) ([]domain.SpikeEvent, error) {
-	return r.GetSpikesForGravity(days)
+func (r *SpikeRepo) GetAllForExport(datasource string, days int) ([]domain.SpikeEvent, error) {
+	return r.GetSpikesForGravity(datasource, days)
 }
