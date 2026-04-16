@@ -28,15 +28,15 @@ type DeploymentState struct {
 
 // Detector is the spike detection engine.
 type Detector struct {
-	cfg          *config.Config
-	promClient   *prometheus.Client
-	correlator   *Correlator
-	states       map[string]*DeploymentState // key: "namespace/deployment"
-	mu           sync.RWMutex
-	onSpike      func(event *domain.SpikeEvent) // callback when spike detected
-	ctx          context.Context
-	cancel       context.CancelFunc
-	datasource   string
+	cfg        *config.Config
+	promClient *prometheus.Client
+	correlator *Correlator
+	states     map[string]*DeploymentState // key: "namespace/deployment"
+	mu         sync.RWMutex
+	onSpike    func(event *domain.SpikeEvent) // callback when spike detected
+	ctx        context.Context
+	cancel     context.CancelFunc
+	datasource string
 }
 
 // NewDetector creates a new spike detection engine.
@@ -94,7 +94,7 @@ func (d *Detector) poll() {
 	}
 
 	now := time.Now()
-	
+
 	var dsCfg *config.DatasourceConfig
 	for i := range d.cfg.Datasources {
 		if d.cfg.Datasources[i].Name == d.datasource {
@@ -156,8 +156,8 @@ func (d *Detector) poll() {
 		cpuThreshold := avgCPU * (1 + d.cfg.Detection.CPUThreshold/100)
 		ramThreshold := avgRAM * (1 + d.cfg.Detection.MemoryThreshold/100)
 
-		cpuSpike := m.CPUPercent > cpuThreshold && m.CPUPercent > 10 // Ignore very low absolute values
-		ramSpike := m.RAMPercent > ramThreshold && m.RAMPercent > 10
+		cpuSpike := m.CPUPercent > cpuThreshold && m.CPUPercent > 80 // Ignore very low absolute values
+		ramSpike := m.RAMPercent > ramThreshold && m.RAMPercent > 80
 
 		if !cpuSpike && !ramSpike {
 			continue
