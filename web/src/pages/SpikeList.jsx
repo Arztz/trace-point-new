@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSpikes, useRetrySpike } from '../hooks/useData';
-import { formatTimestamp, formatPercent, getSeverityClass } from '../utils/formatters';
+import { formatTimestamp, formatPercent } from '../utils/formatters';
 
 export default function SpikeList() {
   const [sort, setSort] = useState('time');
@@ -34,11 +34,11 @@ export default function SpikeList() {
   };
 
   return (
-    <div className="space-y-6 fade-in">
-      <div className="flex items-center justify-between">
+    <div className="fade-in">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>Spike Events</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
+          <h1 className="page-header h1">Spike Events</h1>
+          <p className="page-header p">
             {data?.total || 0} events detected
           </p>
         </div>
@@ -47,7 +47,7 @@ export default function SpikeList() {
       <div className="glass-card overflow-hidden">
         {isLoading ? (
           <div className="p-8 space-y-3">
-            {[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton h-12 rounded" />)}
+            {[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton" style={{ height: '48px' }} />)}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -75,17 +75,17 @@ export default function SpikeList() {
                   return (
                     <tr key={spike.id} onClick={() => setSelectedSpike(spike)} className="cursor-pointer">
                       <td className="mono">{formatTimestamp(spike.timestamp)}</td>
-                      <td className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{spike.deployment_name}</td>
+                      <td className="font-medium" style={{ color: '#ffffff' }}>{spike.deployment_name}</td>
                       <td>{spike.namespace}</td>
-                      <td className="mono" style={{ color: 'var(--color-accent-cpu)' }}>{formatPercent(spike.cpu_usage_percent)}</td>
-                      <td className="mono" style={{ color: 'var(--color-accent-ram)' }}>{formatPercent(spike.ram_usage_percent)}</td>
+                      <td className="mono" style={{ color: '#1c69d4' }}>{formatPercent(spike.cpu_usage_percent)}</td>
+                      <td className="mono" style={{ color: '#a855f7' }}>{formatPercent(spike.ram_usage_percent)}</td>
                       <td className="mono">{formatPercent(spike.moving_average_percent)}</td>
                       <td className="mono">{spike.route_name || '—'}</td>
                       <td className="mono text-xs truncate max-w-32">{spike.culprit_function || '—'}</td>
                       <td>
                         {spike.alert_sent
                           ? <span className="badge badge-low">Sent</span>
-                          : <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>—</span>
+                          : <span className="text-xs" style={{ color: '#666666' }}>—</span>
                         }
                       </td>
                     </tr>
@@ -93,7 +93,7 @@ export default function SpikeList() {
                 })}
                 {(!data?.spikes || data.spikes.length === 0) && (
                   <tr>
-                    <td colSpan="9" className="text-center py-12" style={{ color: 'var(--color-text-muted)' }}>
+                    <td colSpan="9" className="text-center py-12" style={{ color: '#666666' }}>
                       No spike events recorded yet
                     </td>
                   </tr>
@@ -106,21 +106,21 @@ export default function SpikeList() {
 
       {/* Detail modal */}
       {selectedSpike && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}
           onClick={() => setSelectedSpike(null)}>
           <div className="glass-card p-6 max-w-lg w-full mx-4 fade-in" onClick={(e) => e.stopPropagation()}
-            style={{ border: '1px solid var(--color-border-accent)' }}>
+            style={{ border: '2px solid #333333' }}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Spike Details</h2>
+              <h2 className="text-lg font-normal">Spike Details</h2>
               <button onClick={() => setSelectedSpike(null)} className="text-lg cursor-pointer"
-                style={{ color: 'var(--color-text-muted)' }}>✕</button>
+                style={{ color: '#666666', background: 'none', border: 'none' }}>✕</button>
             </div>
-            <div className="space-y-3 text-sm">
+            <div className="space-y-0 text-sm">
               <Row label="Deployment" value={selectedSpike.deployment_name} />
               <Row label="Namespace" value={selectedSpike.namespace} />
               <Row label="Timestamp" value={formatTimestamp(selectedSpike.timestamp)} mono />
-              <Row label="CPU Usage" value={formatPercent(selectedSpike.cpu_usage_percent)} color="var(--color-accent-cpu)" />
-              <Row label="RAM Usage" value={formatPercent(selectedSpike.ram_usage_percent)} color="var(--color-accent-ram)" />
+              <Row label="CPU Usage" value={formatPercent(selectedSpike.cpu_usage_percent)} color="#1c69d4" />
+              <Row label="RAM Usage" value={formatPercent(selectedSpike.ram_usage_percent)} color="#a855f7" />
               <Row label="Moving Average" value={formatPercent(selectedSpike.moving_average_percent)} />
               <Row label="Threshold" value={formatPercent(selectedSpike.threshold_percent)} />
               {selectedSpike.route_name && <Row label="Route" value={selectedSpike.route_name} mono />}
@@ -156,9 +156,9 @@ export default function SpikeList() {
 
 function Row({ label, value, mono, color }) {
   return (
-    <div className="flex justify-between py-1.5" style={{ borderBottom: '1px solid var(--color-border)' }}>
-      <span style={{ color: 'var(--color-text-muted)' }}>{label}</span>
-      <span className={mono ? 'font-mono text-xs' : ''} style={{ color: color || 'var(--color-text-primary)' }}>
+    <div className="flex justify-between py-2.5" style={{ borderBottom: '1px solid #333333' }}>
+      <span style={{ color: '#666666' }}>{label}</span>
+      <span className={mono ? 'font-mono text-xs' : ''} style={{ color: color || '#ffffff' }}>
         {value}
       </span>
     </div>

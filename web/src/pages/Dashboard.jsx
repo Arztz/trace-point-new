@@ -5,26 +5,15 @@ import TimeRangeSelector from '../components/TimeRangeSelector';
 import DeploymentSelector from '../components/DeploymentSelector';
 import { formatPercent, getDeploymentColor } from '../utils/formatters';
 
-/**
- * Shows a multiplier hint next to a metric value.
- * value: percentage (0–200+), where 100% = currently using exactly as requested.
- * multiplier = value / 100
- *   < 1 → overprovisioned → green
- *   > 1 → underprovisioned → red
- *   = 1 → no label shown
- */
 function RecommendHint({ value, label, target = 80 }) {
   const [show, setShow] = useState(false);
   const ref = useRef(null);
 
-  // Multiplier to resize so that utilization lands at `target`%
-  // e.g. avg=50, target=80 → multiplier=0.625 (reduce to 62.5% of current request)
   const multiplier = value / target;
-  // Only show label if meaningfully different from 1 (±5% tolerance)
   if (Math.abs(multiplier - 1) < 0.05) return null;
 
   const isLow = multiplier < 1;
-  const color = isLow ? '#22c55e' : '#ef4444'; // green / red
+  const color = isLow ? '#22c55e' : '#ef4444';
   const label2 = `x${multiplier.toFixed(2)}`;
 
   return (
@@ -34,14 +23,15 @@ function RecommendHint({ value, label, target = 80 }) {
         onMouseLeave={() => setShow(false)}
         style={{
           fontSize: '11px',
-          fontWeight: 600,
+          fontWeight: 700,
           color,
           cursor: 'default',
-          padding: '1px 4px',
-          borderRadius: '4px',
-          background: isLow ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
+          padding: '2px 6px',
+          background: isLow ? 'rgba(22, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+          border: `1px solid ${isLow ? 'rgba(22, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
           letterSpacing: '0.01em',
           userSelect: 'none',
+          lineHeight: 1.15,
         }}
       >
         {label2}
@@ -52,20 +42,20 @@ function RecommendHint({ value, label, target = 80 }) {
           bottom: '120%',
           left: '50%',
           transform: 'translateX(-50%)',
-          background: 'var(--color-bg-primary)',
-          border: '1px solid var(--color-border)',
-          borderRadius: '6px',
-          padding: '5px 9px',
+          background: '#262626',
+          border: '1px solid #333333',
+          padding: '8px 12px',
           fontSize: '11px',
           whiteSpace: 'nowrap',
-          color: 'var(--color-text-primary)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          color: '#ffffff',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
           zIndex: 50,
           pointerEvents: 'none',
+          lineHeight: 1.15,
         }}>
           <span style={{ color, fontWeight: 700 }}>{label2}</span> · {label}
           <br />
-          <span style={{ color: 'var(--color-text-muted)' }}>
+          <span style={{ color: '#666666' }}>
             {isLow
               ? `Overprovisioned — resize to ${label2} → util lands at ~${target}%`
               : `Underprovisioned — resize to ${label2} → util lands at ~${target}%`}
@@ -80,8 +70,8 @@ export default function Dashboard() {
   const [timeRange, setTimeRange] = useState('1h');
   const [selectedDeployment, setSelectedDeployment] = useState(null);
   const [highlighted, setHighlighted] = useState(null);
-  const [cpuFilter, setCpuFilter] = useState(null); // 'high' | 'low' | 'ok' | null
-  const [ramFilter, setRamFilter] = useState(null); // 'high' | 'low' | 'ok' | null
+  const [cpuFilter, setCpuFilter] = useState(null);
+  const [ramFilter, setRamFilter] = useState(null);
 
   const { data, isLoading, error, refetch, isFetching } = useTimeline(timeRange, selectedDeployment);
 
@@ -90,7 +80,6 @@ export default function Dashboard() {
     return [...new Set(data.metrics.map((m) => m.deployment_name))];
   }, [data?.metrics]);
 
-  // Map deployment name → color index for consistent coloring
   const deploymentColorMap = useMemo(() => {
     const map = {};
     deploymentNames.forEach((name, i) => {
@@ -99,7 +88,6 @@ export default function Dashboard() {
     return map;
   }, [deploymentNames]);
 
-  // Sort summaries by deployment_name and apply badge filters
   const filteredSummary = useMemo(() => {
     if (!data?.summary) return [];
     let sorted = [...data.summary].sort((a, b) =>
@@ -119,7 +107,7 @@ export default function Dashboard() {
   };
 
   const handleCpuBadgeClick = (e, classification) => {
-    e.stopPropagation(); // Don't trigger card highlight
+    e.stopPropagation();
     setCpuFilter((prev) => (prev === classification ? null : classification));
   };
 
@@ -131,16 +119,12 @@ export default function Dashboard() {
   const hasActiveFilters = cpuFilter || ramFilter;
 
   return (
-    <div className="space-y-6 fade-in">
+    <div className="fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-            Dashboard
-          </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
-            Resource utilization timeline — deployment level
-          </p>
+          <h1 className="page-header h1">Dashboard</h1>
+          <p className="page-header p">Resource utilization timeline — deployment level</p>
         </div>
         <div className="flex items-center gap-3">
           <DeploymentSelector
@@ -153,7 +137,7 @@ export default function Dashboard() {
             onClick={() => refetch()}
             disabled={isFetching}
             className="btn btn-ghost flex items-center gap-1.5"
-            style={{ padding: '6px 12px' }}
+            style={{ padding: '8px 16px' }}
             title="Refresh data"
           >
             <span style={{
@@ -168,9 +152,9 @@ export default function Dashboard() {
       {/* Loading state */}
       {isLoading && (
         <div className="space-y-4">
-          <div className="skeleton h-[400px] rounded-xl" />
+          <div className="skeleton" style={{ height: '400px' }} />
           <div className="grid grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-24 rounded-xl" />)}
+            {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton" style={{ height: '96px' }} />)}
           </div>
         </div>
       )}
@@ -178,10 +162,10 @@ export default function Dashboard() {
       {/* Error state */}
       {error && (
         <div className="glass-card p-6 text-center">
-          <p className="text-sm" style={{ color: 'var(--color-danger)' }}>
+          <p className="text-sm" style={{ color: '#ef4444' }}>
             Failed to load timeline: {error.message}
           </p>
-          <p className="text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-xs mt-2" style={{ color: '#666666' }}>
             Make sure the backend is running on port 8088
           </p>
         </div>
@@ -200,44 +184,44 @@ export default function Dashboard() {
           {/* Summary cards */}
           {data.summary && data.summary.length > 0 && (
             <>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mt-8 mb-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
+                  <span className="text-xs font-black tracking-wide" style={{ color: '#666666', letterSpacing: '0.5px' }}>
                     DEPLOYMENTS ({filteredSummary.length}/{data.summary.length})
                   </span>
                   {hasActiveFilters && (
                     <button
                       onClick={() => { setCpuFilter(null); setRamFilter(null); }}
-                      className="btn-ghost px-2 py-0.5 rounded text-xs cursor-pointer"
-                      style={{ color: 'var(--color-accent-blue)', border: '1px solid var(--color-border-accent)' }}
+                      className="btn-ghost px-2 py-1 text-xs cursor-pointer"
+                      style={{ color: '#1c69d4', border: '1px solid #1c69d4', padding: '4px 8px' }}
                     >
-                      ✕ Clear filters
+                      Clear filters
                     </button>
                   )}
                 </div>
-                <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                  <span className="flex items-center gap-1">
-                    <span className="w-4 h-0.5 inline-block" style={{ background: 'var(--color-accent-cpu)' }} />
+                <div className="flex items-center gap-4 text-xs" style={{ color: '#666666' }}>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-4 h-0.5 inline-block" style={{ background: '#1c69d4' }} />
                     CPU (solid)
                   </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-4 h-0.5 inline-block" style={{ background: 'var(--color-accent-ram)', borderTop: '1px dashed var(--color-accent-ram)' }} />
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-4 h-0.5 inline-block" style={{ background: '#a855f7', borderTop: '1px dashed #a855f7' }} />
                     RAM (dashed)
                   </span>
                   {highlighted && (
                     <button
                       onClick={() => setHighlighted(null)}
-                      className="btn-ghost px-2 py-0.5 rounded text-xs cursor-pointer"
-                      style={{ color: 'var(--color-accent-blue)', border: '1px solid var(--color-border-accent)' }}
+                      className="btn-ghost px-2 py-1 text-xs cursor-pointer"
+                      style={{ color: '#1c69d4', border: '1px solid #1c69d4', padding: '4px 8px' }}
                     >
-                      ✕ Unhighlight
+                      Unhighlight
                     </button>
                   )}
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredSummary.map((s) => {
-                  const color = deploymentColorMap[s.deployment_name] || '#6366f1';
+                  const color = deploymentColorMap[s.deployment_name] || '#1c69d4';
                   const isActive = !highlighted || highlighted === s.deployment_name;
                   const isSelected = highlighted === s.deployment_name;
 
@@ -249,14 +233,13 @@ export default function Dashboard() {
                       style={{
                         borderLeft: `3px solid ${color}`,
                         opacity: isActive ? 1 : 0.4,
-                        boxShadow: isSelected ? `0 0 16px ${color}20, inset 0 0 0 1px ${color}30` : undefined,
-                        transition: 'all 0.25s ease',
+                        transition: 'all 0.2s ease',
                       }}
                     >
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                          <h3 className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
+                          <span className="w-2 h-2" style={{ background: color }} />
+                          <h3 className="text-sm font-medium truncate" style={{ color: '#ffffff' }}>
                             {s.deployment_name}
                           </h3>
                         </div>
@@ -294,41 +277,37 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
-                        {/* Avg CPU */}
                         <div>
-                          <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>Avg CPU</p>
+                          <p className="text-xs mb-1" style={{ color: '#666666', lineHeight: 1.15 }}>Avg CPU</p>
                           <div className="flex items-baseline gap-1.5">
-                            <p className="text-lg font-mono font-semibold" style={{ color: 'var(--color-accent-cpu)' }}>
+                            <p className="text-lg font-mono font-semibold" style={{ color: '#1c69d4', lineHeight: 1.15 }}>
                               {formatPercent(s.avg_cpu)}
                             </p>
                             <RecommendHint value={s.avg_cpu} label="Recommend request" />
                           </div>
                         </div>
-                        {/* Max CPU */}
                         <div>
-                          <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>Max CPU</p>
+                          <p className="text-xs mb-1" style={{ color: '#666666', lineHeight: 1.15 }}>Max CPU</p>
                           <div className="flex items-baseline gap-1.5">
-                            <p className="text-lg font-mono font-semibold" style={{ color: s.max_cpu > 100 ? 'var(--color-danger)' : 'var(--color-text-primary)' }}>
+                            <p className="text-lg font-mono font-semibold" style={{ color: s.max_cpu > 100 ? '#ef4444' : '#ffffff', lineHeight: 1.15 }}>
                               {formatPercent(s.max_cpu)}
                             </p>
                             <RecommendHint value={s.max_cpu} label="Recommend limit" />
                           </div>
                         </div>
-                        {/* Avg RAM */}
                         <div>
-                          <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>Avg RAM</p>
+                          <p className="text-xs mb-1" style={{ color: '#666666', lineHeight: 1.15 }}>Avg RAM</p>
                           <div className="flex items-baseline gap-1.5">
-                            <p className="text-lg font-mono font-semibold" style={{ color: 'var(--color-accent-ram)' }}>
+                            <p className="text-lg font-mono font-semibold" style={{ color: '#a855f7', lineHeight: 1.15 }}>
                               {formatPercent(s.avg_ram)}
                             </p>
                             <RecommendHint value={s.avg_ram} label="Recommend request" />
                           </div>
                         </div>
-                        {/* Max RAM */}
                         <div>
-                          <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>Max RAM</p>
+                          <p className="text-xs mb-1" style={{ color: '#666666', lineHeight: 1.15 }}>Max RAM</p>
                           <div className="flex items-baseline gap-1.5">
-                            <p className="text-lg font-mono font-semibold" style={{ color: s.max_ram > 100 ? 'var(--color-danger)' : 'var(--color-text-primary)' }}>
+                            <p className="text-lg font-mono font-semibold" style={{ color: s.max_ram > 100 ? '#ef4444' : '#ffffff', lineHeight: 1.15 }}>
                               {formatPercent(s.max_ram)}
                             </p>
                             <RecommendHint value={s.max_ram} label="Recommend limit" />

@@ -10,13 +10,21 @@ export default function TimeRangeSelector({ value, onChange }) {
   ];
 
   return (
-    <div className="flex gap-1 p-1 rounded-lg" style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)' }}>
-      {ranges.map((r) => (
+    <div className="flex gap-0">
+      {ranges.map((r, i) => (
         <button
           key={r.value}
           onClick={() => onChange(r.value)}
-          className={`btn ${value === r.value ? 'btn-ghost active' : 'btn-ghost'}`}
-          style={{ padding: '4px 12px', fontSize: '12px' }}
+          className="btn"
+          style={{ 
+            padding: '6px 12px', 
+            fontSize: '11px',
+            fontWeight: value === r.value ? 700 : 400,
+            background: value === r.value ? '#1c69d4' : 'transparent',
+            color: value === r.value ? '#ffffff' : '#a0a0a0',
+            border: value === r.value ? '1px solid #1c69d4' : '1px solid #333333',
+            borderRight: i < ranges.length - 1 ? 'none' : '1px solid #333333',
+          }}
         >
           {r.label}
         </button>

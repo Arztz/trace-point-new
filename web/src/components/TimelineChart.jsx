@@ -6,14 +6,18 @@ import {
 import { formatShortTime, getDeploymentColor, formatPercent } from '../utils/formatters';
 
 export default function TimelineChart({ metrics = [], spikeMarkers = [], highlighted, deployments = [] }) {
-  // Transform data: pivot metrics into chart-friendly format
-  const { chartData, deploymentNames } = useMemo(() => {
-    if (!metrics.length) return { chartData: [], deploymentNames: [] };
+  const { chartData, deploymentNames, yDomain } = useMemo(() => {
+    if (!metrics.length) return { chartData: [], deploymentNames: [], yDomain: [0, 100] };
+
+    // Filter metrics if a deployment is highlighted
+    const filteredMetrics = highlighted
+      ? metrics.filter((m) => m.deployment_name === highlighted)
+      : metrics;
 
     const nameSet = new Set();
     const timeMap = new Map();
 
-    metrics.forEach((m) => {
+    filteredMetrics.forEach((m) => {
       const ts = new Date(m.timestamp).getTime();
       nameSet.add(m.deployment_name);
 
@@ -26,13 +30,24 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
     });
 
     const sorted = Array.from(timeMap.values()).sort((a, b) => a.timestamp - b.timestamp);
-    return { chartData: sorted, deploymentNames: Array.from(nameSet) };
-  }, [metrics]);
+
+    // Calculate Y-axis domain based on max values in filtered data
+    let maxVal = 0;
+    filteredMetrics.forEach((m) => {
+      maxVal = Math.max(maxVal, m.cpu_percent || 0, m.ram_percent || 0);
+    });
+
+    // Round up to nearest nice number and add padding
+    const roundedMax = maxVal <= 10 ? 20 : maxVal <= 50 ? 60 : maxVal <= 100 ? 120 : Math.ceil(maxVal / 50) * 50;
+    const domain = [0, Math.max(roundedMax * 1.1, 100)];
+
+    return { chartData: sorted, deploymentNames: Array.from(nameSet), yDomain: domain };
+  }, [metrics, highlighted]);
 
   if (!chartData.length) {
     return (
-      <div className="flex items-center justify-center h-80 glass-card">
-        <p style={{ color: 'var(--color-text-muted)' }}>No metrics data available</p>
+      <div className="flex items-center justify-center glass-card" style={{ height: '400px' }}>
+        <p style={{ color: '#666666' }}>No metrics data available</p>
       </div>
     );
   }
@@ -40,18 +55,17 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length || !highlighted) return null;
 
-    // Only show entries for the highlighted deployment
     const filtered = payload.filter((entry) => entry.dataKey.startsWith(`${highlighted}_`));
     if (!filtered.length) return null;
 
     return (
-      <div className="p-3 rounded-lg text-xs" style={{
-        background: 'rgba(15, 17, 23, 0.95)',
-        border: '1px solid var(--color-border-accent)',
-        backdropFilter: 'blur(8px)',
+      <div className="p-3" style={{
+        background: '#262626',
+        border: '1px solid #333333',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
         maxWidth: '300px',
       }}>
-        <p className="font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
+        <p className="font-medium mb-2" style={{ color: '#ffffff' }}>
           {formatShortTime(label)}
         </p>
         {filtered.map((entry, i) => {
@@ -59,7 +73,7 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
           return (
             <div key={i} className="flex justify-between gap-4 py-0.5">
               <span style={{ color: entry.color }}>{highlighted} ({type})</span>
-              <span className="font-mono" style={{ color: 'var(--color-text-primary)' }}>
+              <span className="font-mono" style={{ color: '#ffffff' }}>
                 {formatPercent(entry.value)}
               </span>
             </div>
@@ -73,27 +87,27 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
     <div className="glass-card p-4">
       <ResponsiveContainer width="100%" height={400}>
         <ComposedChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(99, 102, 241, 0.08)" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#333333" />
           <XAxis
             dataKey="timestamp"
             tickFormatter={formatShortTime}
-            stroke="var(--color-text-muted)"
+            stroke="#666666"
             fontSize={11}
             tickLine={false}
           />
           <YAxis
-            stroke="var(--color-text-muted)"
+            stroke="#666666"
             fontSize={11}
             tickLine={false}
             tickFormatter={(v) => `${v.toFixed(0)}%`}
-            domain={[0, 'auto']}
+            domain={yDomain}
           />
           {highlighted && <Tooltip content={<CustomTooltip />} />}
 
-          {/* Reference line at 100% */}
-          <ReferenceLine y={100} stroke="#ef4444" strokeDasharray="8 4" strokeOpacity={0.3} />
+          {yDomain[1] >= 100 && (
+            <ReferenceLine y={100} stroke="#ef4444" strokeDasharray="8 4" strokeOpacity={0.3} />
+          )}
 
-          {/* Spike markers */}
           {spikeMarkers.map((spike, i) => (
             <ReferenceLine
               key={i}
@@ -104,11 +118,8 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
             />
           ))}
 
-          {/* Deployment lines */}
           {deploymentNames.map((name, index) => {
             const color = getDeploymentColor(index);
-            const isActive = !highlighted || highlighted === name;
-            const opacity = isActive ? 1 : 0.1;
 
             return (
               <Fragment key={name}>
@@ -117,8 +128,7 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
                   type="monotone"
                   dataKey={`${name}_cpu`}
                   stroke={color}
-                  strokeWidth={isActive ? 2 : 1}
-                  strokeOpacity={opacity}
+                  strokeWidth={2}
                   dot={false}
                   connectNulls
                   name={`${name} CPU`}
@@ -130,9 +140,9 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
                   stroke={color}
                   strokeWidth={1}
                   strokeDasharray="4 2"
-                  strokeOpacity={opacity * 0.7}
+                  strokeOpacity={0.7}
                   fill={color}
-                  fillOpacity={opacity * 0.05}
+                  fillOpacity={0.05}
                   dot={false}
                   connectNulls
                   name={`${name} RAM`}

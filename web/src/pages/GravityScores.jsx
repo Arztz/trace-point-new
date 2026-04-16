@@ -21,33 +21,33 @@ export default function GravityScores() {
   };
 
   return (
-    <div className="space-y-6 fade-in">
-      <div className="flex items-center justify-between">
+    <div className="fade-in">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>Resource Gravity Scores</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
+          <h1 className="page-header h1">Resource Gravity Scores</h1>
+          <p className="page-header p">
             Identify services needing architectural refactoring
           </p>
         </div>
         <button onClick={handleExport} className="btn btn-primary">
-          📁 Export JSON
+          Export JSON
         </button>
       </div>
 
       {/* Score legend */}
-      <div className="glass-card p-4">
+      <div className="glass-card p-4 mb-6">
         <div className="flex items-center gap-6 text-xs">
-          <span style={{ color: 'var(--color-text-muted)' }}>Score Range:</span>
+          <span style={{ color: '#666666' }}>Score Range:</span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full" style={{ background: 'var(--color-severity-critical)' }} />
+            <span className="w-2 h-2" style={{ background: '#ef4444' }} />
             6+ High Impact (priority refactoring)
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full" style={{ background: 'var(--color-severity-medium)' }} />
+            <span className="w-2 h-2" style={{ background: '#f59e0b' }} />
             3-6 Medium (consider optimization)
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full" style={{ background: 'var(--color-severity-low)' }} />
+            <span className="w-2 h-2" style={{ background: '#22c55e' }} />
             0-3 Low (monitor)
           </span>
         </div>
@@ -55,13 +55,13 @@ export default function GravityScores() {
 
       {isLoading && (
         <div className="space-y-3">
-          {[1, 2, 3].map((i) => <div key={i} className="skeleton h-16 rounded-xl" />)}
+          {[1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ height: '64px' }} />)}
         </div>
       )}
 
       {error && (
         <div className="glass-card p-6 text-center">
-          <p className="text-sm" style={{ color: 'var(--color-danger)' }}>Failed to load scores: {error.message}</p>
+          <p className="text-sm" style={{ color: '#ef4444' }}>Failed to load scores: {error.message}</p>
         </div>
       )}
 
@@ -87,21 +87,21 @@ export default function GravityScores() {
                   const impact = classifyImpact(score.resource_gravity_score);
                   return (
                     <tr key={i}>
-                      <td className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{score.service_name}</td>
+                      <td className="font-medium" style={{ color: '#ffffff' }}>{score.service_name}</td>
                       <td className="mono text-xs">{score.route_name}</td>
                       <td className="mono">{score.spike_count}</td>
-                      <td className="mono" style={{ color: 'var(--color-accent-cpu)' }}>{formatPercent(score.max_cpu_percent)}</td>
-                      <td className="mono" style={{ color: 'var(--color-accent-ram)' }}>{formatPercent(score.max_ram_percent)}</td>
+                      <td className="mono" style={{ color: '#1c69d4' }}>{formatPercent(score.max_cpu_percent)}</td>
+                      <td className="mono" style={{ color: '#a855f7' }}>{formatPercent(score.max_ram_percent)}</td>
                       <td className="mono">{formatPercent(score.average_cpu_percent)}</td>
                       <td className="mono">{formatPercent(score.average_ram_percent)}</td>
                       <td>
                         <div className="flex items-center gap-2">
-                          <div className="w-16 h-2 rounded-full overflow-hidden" style={{ background: 'var(--color-bg-primary)' }}>
-                            <div className="h-full rounded-full"
+                          <div className="w-16 h-1.5" style={{ background: '#333333' }}>
+                            <div className="h-full"
                               style={{
                                 width: `${Math.min(score.resource_gravity_score * 10, 100)}%`,
-                                background: impact === 'high' ? 'var(--color-severity-critical)' :
-                                  impact === 'medium' ? 'var(--color-severity-medium)' : 'var(--color-severity-low)',
+                                background: impact === 'high' ? '#ef4444' :
+                                  impact === 'medium' ? '#f59e0b' : '#22c55e',
                               }} />
                           </div>
                           <span className="mono font-semibold text-xs">{score.resource_gravity_score.toFixed(1)}</span>
@@ -118,7 +118,7 @@ export default function GravityScores() {
                 })}
                 {(!data.scores || data.scores.length === 0) && (
                   <tr>
-                    <td colSpan="9" className="text-center py-12" style={{ color: 'var(--color-text-muted)' }}>
+                    <td colSpan="9" className="text-center py-12" style={{ color: '#666666' }}>
                       No gravity scores available yet — needs spike data
                     </td>
                   </tr>

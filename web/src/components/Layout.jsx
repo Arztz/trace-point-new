@@ -2,76 +2,72 @@ import { NavLink, Outlet } from 'react-router-dom';
 import DatasourceSelector from './DatasourceSelector';
 
 const navItems = [
-  { path: '/', label: 'Dashboard', icon: '📊' },
-  { path: '/spikes', label: 'Spike Events', icon: '⚡' },
-  { path: '/explorer', label: 'Spike Explorer', icon: '🔍' },
-  { path: '/gravity', label: 'Gravity Scores', icon: '🎯' },
+  { path: '/', label: 'Dashboard' },
+  { path: '/spikes', label: 'Spike Events' },
+  { path: '/explorer', label: 'Spike Explorer' },
+  { path: '/gravity', label: 'Gravity Scores' },
 ];
 
 export default function Layout() {
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
+      {/* Sidebar - Dark navigation */}
       <aside className="w-64 flex-shrink-0 flex flex-col"
-        style={{
-          background: 'linear-gradient(180deg, #0d0f1a 0%, #141728 100%)',
-          borderRight: '1px solid var(--color-border)'
-        }}>
+        style={{ background: '#0d0d0d' }}>
         {/* Logo */}
-        <div className="p-5 flex items-center gap-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+        <div className="p-5 flex items-center gap-3" style={{ borderBottom: '1px solid #333' }}>
+          <div className="w-8 h-8 flex items-center justify-center text-xs font-black tracking-tight"
+            style={{ 
+              background: '#1c69d4',
+              color: '#ffffff'
+            }}>
             TP
           </div>
           <div>
-            <h1 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Trace-Point</h1>
-            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>v1.0.3</p>
+            <h1 className="text-sm font-black tracking-tight" style={{ color: '#ffffff' }}>Trace-Point</h1>
+            <p className="text-xs" style={{ color: '#666666' }}>v1.0.3</p>
           </div>
         </div>
 
         {/* Datasource Selector */}
-        <div className="px-5 py-3 border-b border-white/5">
+        <div className="px-5 py-4" style={{ borderBottom: '1px solid #333' }}>
           <DatasourceSelector />
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 flex flex-col gap-1">
+        <nav className="flex-1 p-3 flex flex-col gap-0.5">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               end={item.path === '/'}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
-                  isActive
-                    ? 'font-medium'
-                    : 'hover:bg-white/5'
+                `px-4 py-3 text-sm transition-all duration-150 ${
+                  isActive ? 'font-black tracking-tight' : 'font-normal'
                 }`
               }
               style={({ isActive }) => ({
-                background: isActive ? 'rgba(99, 102, 241, 0.12)' : undefined,
-                color: isActive ? '#818cf8' : 'var(--color-text-secondary)',
-                borderLeft: isActive ? '2px solid #6366f1' : '2px solid transparent',
+                background: isActive ? '#1c69d4' : 'transparent',
+                color: isActive ? '#ffffff' : '#a0a0a0',
               })}
             >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
+              {item.label}
             </NavLink>
           ))}
         </nav>
 
         {/* Status indicator */}
-        <div className="p-4" style={{ borderTop: '1px solid var(--color-border)' }}>
+        <div className="p-5" style={{ borderTop: '1px solid #333' }}>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full pulse" style={{ background: '#10b981' }} />
-            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Monitoring active</span>
+            <div className="w-2 h-2 pulse" style={{ background: '#22c55e' }} />
+            <span className="text-xs" style={{ color: '#666666' }}>Monitoring active</span>
           </div>
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-auto" style={{ background: 'var(--color-bg-primary)' }}>
-        <div className="p-6">
+      {/* Main content - Dark background */}
+      <main className="flex-1 overflow-auto" style={{ background: '#0d0d0d' }}>
+        <div className="p-8">
           <Outlet />
         </div>
       </main>

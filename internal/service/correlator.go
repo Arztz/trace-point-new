@@ -49,11 +49,6 @@ func (c *Correlator) HandleSpike(event *domain.SpikeEvent) {
 	}
 	log.Printf("[Correlator] Spike stored: %s for %s/%s", event.ID, event.Namespace, event.DeploymentName)
 
-	// Step 2: Wait for reconciliation buffer (let GCP Profiler data become available)
-	bufferMinutes := c.cfg.Detection.ReconciliationBufferMinutes
-	log.Printf("[Correlator] Waiting %d minutes for reconciliation buffer...", bufferMinutes)
-	time.Sleep(time.Duration(bufferMinutes) * time.Minute)
-
 	ctx := context.Background()
 
 	// Step 3: Query SigNoz/ClickHouse for traces during the spike period
@@ -74,6 +69,10 @@ func (c *Correlator) HandleSpike(event *domain.SpikeEvent) {
 
 	// Step 4: Fetch GCP Profiler data
 	if c.profilerClient.IsEnabled() {
+		// Step 2: Wait for reconciliation buffer (let GCP Profiler data become available)
+		bufferMinutes := c.cfg.Detection.ReconciliationBufferMinutes
+		log.Printf("[Correlator] Waiting %d minutes for reconciliation buffer...", bufferMinutes)
+		time.Sleep(time.Duration(bufferMinutes) * time.Minute)
 		log.Printf("[Correlator] Fetching GCP Profiler data...")
 		profileStart := event.Timestamp.Add(-10 * time.Minute)
 		profileEnd := event.Timestamp.Add(5 * time.Minute)

@@ -31,29 +31,29 @@ export default function SpikeExplorer() {
   };
 
   return (
-    <div className="space-y-6 fade-in">
-      <div>
-        <h1 className="text-2xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>Spike Explorer</h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
+    <div className="fade-in">
+      <div className="mb-8">
+        <h1 className="page-header h1">Spike Explorer</h1>
+        <p className="page-header p">
           Historical spike analysis with sliding window algorithm
         </p>
       </div>
 
       {/* Controls */}
-      <form onSubmit={handleSubmit} className="glass-card p-5">
+      <form onSubmit={handleSubmit} className="glass-card p-5 mb-6">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <div>
-            <label className="text-xs block mb-1.5" style={{ color: 'var(--color-text-muted)' }}>Start</label>
+            <label className="text-xs block mb-1.5" style={{ color: '#666666', lineHeight: 1.15 }}>Start</label>
             <input type="datetime-local" className="input w-full"
               value={params.start} onChange={(e) => setParams({ ...params, start: e.target.value })} />
           </div>
           <div>
-            <label className="text-xs block mb-1.5" style={{ color: 'var(--color-text-muted)' }}>End</label>
+            <label className="text-xs block mb-1.5" style={{ color: '#666666', lineHeight: 1.15 }}>End</label>
             <input type="datetime-local" className="input w-full"
               value={params.end} onChange={(e) => setParams({ ...params, end: e.target.value })} />
           </div>
           <div>
-            <label className="text-xs block mb-1.5" style={{ color: 'var(--color-text-muted)' }}>Window</label>
+            <label className="text-xs block mb-1.5" style={{ color: '#666666', lineHeight: 1.15 }}>Window</label>
             <select className="select w-full"
               value={params.window} onChange={(e) => setParams({ ...params, window: e.target.value })}>
               <option value="5m">5 minutes</option>
@@ -63,12 +63,12 @@ export default function SpikeExplorer() {
             </select>
           </div>
           <div>
-            <label className="text-xs block mb-1.5" style={{ color: 'var(--color-text-muted)' }}>Namespace</label>
+            <label className="text-xs block mb-1.5" style={{ color: '#666666', lineHeight: 1.15 }}>Namespace</label>
             <input type="text" className="input w-full" placeholder="All"
               value={params.namespace} onChange={(e) => setParams({ ...params, namespace: e.target.value })} />
           </div>
           <div>
-            <label className="text-xs block mb-1.5" style={{ color: 'var(--color-text-muted)' }}>Threshold %</label>
+            <label className="text-xs block mb-1.5" style={{ color: '#666666', lineHeight: 1.15 }}>Threshold %</label>
             <input type="number" className="input w-full"
               value={params.threshold} onChange={(e) => setParams({ ...params, threshold: Number(e.target.value) })} />
           </div>
@@ -81,16 +81,16 @@ export default function SpikeExplorer() {
       {/* Loading */}
       {isLoading && (
         <div className="glass-card p-8 text-center">
-          <div className="inline-block w-6 h-6 border-2 border-t-transparent rounded-full animate-spin mb-3"
-            style={{ borderColor: 'var(--color-accent-blue)', borderTopColor: 'transparent' }} />
-          <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Analyzing...</p>
+          <div className="inline-block w-6 h-6 border-2 border-t-transparent mb-3 animate-spin"
+            style={{ borderColor: '#1c69d4', borderTopColor: 'transparent' }} />
+          <p className="text-sm" style={{ color: '#666666' }}>Analyzing...</p>
         </div>
       )}
 
       {/* Error */}
       {error && (
         <div className="glass-card p-6 text-center">
-          <p className="text-sm" style={{ color: 'var(--color-danger)' }}>Analysis failed: {error.message}</p>
+          <p className="text-sm" style={{ color: '#ef4444' }}>Analysis failed: {error.message}</p>
         </div>
       )}
 
@@ -98,16 +98,16 @@ export default function SpikeExplorer() {
       {data && !isLoading && (
         <>
           {/* Summary */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <StatCard label="Total Spikes" value={data.summary?.total_spikes || 0} />
             <StatCard label="Deployments Analyzed" value={data.summary?.analyzed_deployments || 0} />
             <StatCard label="Time Range" value={`${(data.summary?.time_range_hours || 0).toFixed(1)}h`} />
-            <StatCard label="CPU Spikes" value={data.summary?.spikes_by_type?.cpu || 0} color="var(--color-accent-cpu)" />
+            <StatCard label="CPU Spikes" value={data.summary?.spikes_by_type?.cpu || 0} color="#1c69d4" />
           </div>
 
           {/* Spikes table */}
           <div className="glass-card overflow-hidden">
-            <div className="p-4" style={{ borderBottom: '1px solid var(--color-border)' }}>
+            <div className="p-4" style={{ borderBottom: '1px solid #333333' }}>
               <h3 className="text-sm font-medium">
                 Detected Spikes ({data.spikes?.length || 0})
               </h3>
@@ -131,10 +131,10 @@ export default function SpikeExplorer() {
                   {data.spikes?.map((spike) => (
                     <tr key={spike.id}>
                       <td className="mono">{formatTimestamp(spike.timestamp)}</td>
-                      <td className="font-medium" style={{ color: 'var(--color-text-primary)' }}>{spike.deployment_name}</td>
+                      <td className="font-medium" style={{ color: '#ffffff' }}>{spike.deployment_name}</td>
                       <td><span className="badge badge-medium">{spike.type}</span></td>
-                      <td className="mono" style={{ color: 'var(--color-accent-cpu)' }}>{formatPercent(spike.cpu_percent)}</td>
-                      <td className="mono" style={{ color: 'var(--color-accent-ram)' }}>{formatPercent(spike.ram_percent)}</td>
+                      <td className="mono" style={{ color: '#1c69d4' }}>{formatPercent(spike.cpu_percent)}</td>
+                      <td className="mono" style={{ color: '#a855f7' }}>{formatPercent(spike.ram_percent)}</td>
                       <td className="mono">{formatPercent(spike.moving_average_cpu)}</td>
                       <td className="mono">{formatPercent(spike.moving_average_ram)}</td>
                       <td className="mono font-semibold">{formatPercent(spike.deviation_percent)}</td>
@@ -143,7 +143,7 @@ export default function SpikeExplorer() {
                   ))}
                   {(!data.spikes || data.spikes.length === 0) && (
                     <tr>
-                      <td colSpan="9" className="text-center py-12" style={{ color: 'var(--color-text-muted)' }}>
+                      <td colSpan="9" className="text-center py-12" style={{ color: '#666666' }}>
                         No spikes found in the selected range
                       </td>
                     </tr>
@@ -161,8 +161,8 @@ export default function SpikeExplorer() {
 function StatCard({ label, value, color }) {
   return (
     <div className="glass-card p-4 text-center">
-      <p className="text-xs mb-1" style={{ color: 'var(--color-text-muted)' }}>{label}</p>
-      <p className="text-2xl font-mono font-bold" style={{ color: color || 'var(--color-text-primary)' }}>{value}</p>
+      <p className="text-xs mb-1" style={{ color: '#666666', lineHeight: 1.15 }}>{label}</p>
+      <p className="text-2xl font-mono font-bold" style={{ color: color || '#ffffff', lineHeight: 1.15 }}>{value}</p>
     </div>
   );
 }

@@ -33,9 +33,9 @@ export function formatDuration(ms) {
 export function getSeverityColor(severity) {
   switch (severity) {
     case 'critical': return '#ef4444';
-    case 'medium': return '#f59e0b';
-    case 'low': return '#22c55e';
-    default: return '#64748b';
+    case 'medium': return '#d97706';
+    case 'low': return '#16a34a';
+    default: return '#757575';
   }
 }
 
@@ -48,12 +48,11 @@ export function getSeverityClass(severity) {
   }
 }
 
-// 20-color palette for deployment differentiation
 export const DEPLOYMENT_COLORS = [
-  '#06b6d4', '#a855f7', '#f59e0b', '#10b981', '#ef4444',
-  '#6366f1', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6',
-  '#22d3ee', '#c084fc', '#fbbf24', '#34d399', '#f87171',
-  '#818cf8', '#fb7185', '#2dd4bf', '#fb923c', '#a78bfa',
+  '#1c69d4', '#a855f7', '#d97706', '#16a34a', '#ef4444',
+  '#0891b2', '#c026d3', '#ca8a04', '#059669', '#dc2626',
+  '#0284c7', '#9333ea', '#fbbf24', '#22c55e', '#b91c1c',
+  '#0369a1', '#7c3aed', '#a16207', '#15803d', '#991b1b',
 ];
 
 export function getDeploymentColor(index) {

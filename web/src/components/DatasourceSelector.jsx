@@ -11,7 +11,7 @@ export default function DatasourceSelector() {
         const defaultDs = data.datasources[0].id;
         setActive(defaultDs);
         localStorage.setItem('activeDatasource', defaultDs);
-        window.location.reload(); // Reload to refresh all queries with the new datasource
+        window.location.reload();
       }
     }
   }, [data, isLoading, active]);
@@ -23,20 +23,26 @@ export default function DatasourceSelector() {
     window.location.reload();
   };
 
-  if (isLoading) return <div className="text-xs text-gray-500 loading-pulse">Loading sources...</div>;
+  if (isLoading) return <div className="text-xs" style={{ color: '#666666' }}>Loading sources...</div>;
   if (!data?.datasources?.length) return null;
 
   return (
     <div className="flex items-center gap-2">
-      <label className="text-xs text-gray-400 font-medium whitespace-nowrap">Datasource:</label>
+      <label className="text-xs whitespace-nowrap" style={{ color: '#666666', fontWeight: 400 }}>Datasource:</label>
       <select
         value={active}
         onChange={handleChange}
-        className="text-xs bg-slate-800 border border-slate-700 rounded px-2 py-1 outline-none focus:border-indigo-500 transition-colors"
-        style={{ color: 'var(--color-text-primary)' }}
+        className="select"
+        style={{ 
+          padding: '4px 24px 4px 8px', 
+          fontSize: '11px',
+          background: '#1a1a1a',
+          color: '#ffffff',
+          border: '1px solid #333',
+        }}
       >
         {data.datasources.map(ds => (
-          <option key={ds.id} value={ds.id}>{ds.name}</option>
+          <option key={ds.id} value={ds.id} style={{ background: '#1a1a1a' }}>{ds.name}</option>
         ))}
       </select>
     </div>

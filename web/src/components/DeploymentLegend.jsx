@@ -13,15 +13,15 @@ export default function DeploymentLegend({ deployments = [], highlighted, onTogg
           <button
             key={name}
             onClick={() => onToggle(highlighted === name ? null : name)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-all duration-200 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-all duration-200 cursor-pointer"
             style={{
-              background: isActive ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-              border: `1px solid ${isActive ? color + '40' : 'var(--color-border)'}`,
+              background: isActive ? 'rgba(28, 105, 212, 0.15)' : 'transparent',
+              border: `1px solid ${isActive ? color + '80' : '#333333'}`,
               opacity: isActive ? 1 : 0.4,
-              color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+              color: isActive ? '#ffffff' : '#666666',
             }}
           >
-            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
+            <span className="w-2 h-2 flex-shrink-0" style={{ background: color }} />
             <span className="truncate max-w-28">{name}</span>
           </button>
         );
