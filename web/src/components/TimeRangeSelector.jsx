@@ -16,14 +16,16 @@ export default function TimeRangeSelector({ value, onChange }) {
           key={r.value}
           onClick={() => onChange(r.value)}
           className="btn"
-          style={{ 
-            padding: '6px 12px', 
-            fontSize: '11px',
-            fontWeight: value === r.value ? 700 : 400,
-            background: value === r.value ? '#1c69d4' : 'transparent',
-            color: value === r.value ? '#ffffff' : '#a0a0a0',
-            border: value === r.value ? '1px solid #1c69d4' : '1px solid #333333',
+          style={{
+            padding: '8px 14px',
+            fontSize: '12px',
+            fontWeight: value === r.value ? 600 : 500,
+            background: value === r.value ? '#3b82f6' : 'rgba(255, 255, 255, 0.05)',
+            color: value === r.value ? '#ffffff' : '#8e8e93',
+            border: value === r.value ? '1px solid #3b82f6' : '1px solid #333333',
             borderRight: i < ranges.length - 1 ? 'none' : '1px solid #333333',
+            borderRadius: i === 0 ? '9999px 0 0 9999px' : i === ranges.length - 1 ? '0 9999px 9999px 0' : '0',
+            boxShadow: value === r.value ? '0 2px 8px rgba(59, 130, 246, 0.3)' : 'none',
           }}
         >
           {r.label}

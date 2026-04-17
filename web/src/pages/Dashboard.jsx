@@ -23,15 +23,16 @@ function RecommendHint({ value, label, target = 80 }) {
         onMouseLeave={() => setShow(false)}
         style={{
           fontSize: '11px',
-          fontWeight: 700,
+          fontWeight: 600,
           color,
           cursor: 'default',
-          padding: '2px 6px',
+          padding: '4px 8px',
           background: isLow ? 'rgba(22, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
           border: `1px solid ${isLow ? 'rgba(22, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
+          borderRadius: '9999px',
           letterSpacing: '0.01em',
           userSelect: 'none',
-          lineHeight: 1.15,
+          lineHeight: 1.50,
         }}
       >
         {label2}
@@ -42,20 +43,21 @@ function RecommendHint({ value, label, target = 80 }) {
           bottom: '120%',
           left: '50%',
           transform: 'translateX(-50%)',
-          background: '#262626',
+          background: '#222222',
           border: '1px solid #333333',
-          padding: '8px 12px',
-          fontSize: '11px',
+          padding: '10px 14px',
+          fontSize: '12px',
           whiteSpace: 'nowrap',
           color: '#ffffff',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          borderRadius: '12px',
           zIndex: 50,
           pointerEvents: 'none',
-          lineHeight: 1.15,
+          lineHeight: 1.50,
         }}>
-          <span style={{ color, fontWeight: 700 }}>{label2}</span> · {label}
+          <span style={{ color, fontWeight: 600 }}>{label2}</span> · {label}
           <br />
-          <span style={{ color: '#666666' }}>
+          <span style={{ color: '#8e8e93' }}>
             {isLow
               ? `Overprovisioned — resize to ${label2} → util lands at ~${target}%`
               : `Underprovisioned — resize to ${label2} → util lands at ~${target}%`}
@@ -93,6 +95,9 @@ export default function Dashboard() {
     let sorted = [...data.summary].sort((a, b) =>
       a.deployment_name.localeCompare(b.deployment_name)
     );
+    if (highlighted) {
+      sorted = sorted.filter((s) => s.deployment_name === highlighted);
+    }
     if (cpuFilter) {
       sorted = sorted.filter((s) => s.cpu_classification === cpuFilter);
     }
@@ -100,7 +105,7 @@ export default function Dashboard() {
       sorted = sorted.filter((s) => s.ram_classification === ramFilter);
     }
     return sorted;
-  }, [data?.summary, cpuFilter, ramFilter]);
+  }, [data?.summary, highlighted, cpuFilter, ramFilter]);
 
   const handleCardClick = (deploymentName) => {
     setHighlighted((prev) => (prev === deploymentName ? null : deploymentName));
@@ -120,10 +125,9 @@ export default function Dashboard() {
 
   return (
     <div className="fade-in">
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="page-header h1">Dashboard</h1>
+          <h1 className="page-header h1 text-display">Dashboard</h1>
           <p className="page-header p">Resource utilization timeline — deployment level</p>
         </div>
         <div className="flex items-center gap-3">
@@ -149,29 +153,26 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Loading state */}
       {isLoading && (
         <div className="space-y-4">
           <div className="skeleton" style={{ height: '400px' }} />
-          <div className="grid grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton" style={{ height: '96px' }} />)}
+          <div className="grid grid-cols-4 gap-5">
+            {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton" style={{ height: '160px', borderRadius: '16px' }} />)}
           </div>
         </div>
       )}
 
-      {/* Error state */}
       {error && (
-        <div className="glass-card p-6 text-center">
+        <div className="card-elevated p-6 text-center">
           <p className="text-sm" style={{ color: '#ef4444' }}>
             Failed to load timeline: {error.message}
           </p>
-          <p className="text-xs mt-2" style={{ color: '#666666' }}>
+          <p className="text-xs mt-2" style={{ color: '#8e8e93' }}>
             Make sure the backend is running on port 8088
           </p>
         </div>
       )}
 
-      {/* Chart */}
       {data && !isLoading && (
         <>
           <TimelineChart
@@ -181,69 +182,69 @@ export default function Dashboard() {
             deployments={filteredSummary.map(s => s.deployment_name)}
           />
 
-          {/* Summary cards */}
           {data.summary && data.summary.length > 0 && (
             <>
-              <div className="flex items-center justify-between mt-8 mb-4">
+              <div className="flex items-center justify-between mt-8 mb-5">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-black tracking-wide" style={{ color: '#666666', letterSpacing: '0.5px' }}>
+                  <span className="text-xs font-semibold tracking-widest" style={{ color: '#8e8e93', letterSpacing: '1px' }}>
                     DEPLOYMENTS ({filteredSummary.length}/{data.summary.length})
                   </span>
                   {hasActiveFilters && (
                     <button
                       onClick={() => { setCpuFilter(null); setRamFilter(null); }}
-                      className="btn-ghost px-2 py-1 text-xs cursor-pointer"
-                      style={{ color: '#1c69d4', border: '1px solid #1c69d4', padding: '4px 8px' }}
+                      className="btn btn-ghost text-xs cursor-pointer"
+                      style={{ color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', padding: '4px 12px' }}
                     >
                       Clear filters
                     </button>
                   )}
                 </div>
-                <div className="flex items-center gap-4 text-xs" style={{ color: '#666666' }}>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-4 h-0.5 inline-block" style={{ background: '#1c69d4' }} />
+                <div className="flex items-center gap-5 text-xs" style={{ color: '#8e8e93' }}>
+                  <span className="flex items-center gap-2">
+                    <span className="w-5 h-0.5 inline-block rounded-full" style={{ background: '#3b82f6' }} />
                     CPU (solid)
                   </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-4 h-0.5 inline-block" style={{ background: '#a855f7', borderTop: '1px dashed #a855f7' }} />
+                  <span className="flex items-center gap-2">
+                    <span className="w-5 h-0.5 inline-block rounded-full border-t-2 border-dashed" style={{ borderColor: '#a855f7', background: 'transparent' }} />
                     RAM (dashed)
                   </span>
                   {highlighted && (
                     <button
                       onClick={() => setHighlighted(null)}
-                      className="btn-ghost px-2 py-1 text-xs cursor-pointer"
-                      style={{ color: '#1c69d4', border: '1px solid #1c69d4', padding: '4px 8px' }}
+                      className="btn btn-ghost text-xs cursor-pointer"
+                      style={{ color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', padding: '4px 12px' }}
                     >
                       Unhighlight
                     </button>
                   )}
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredSummary.map((s) => {
-                  const color = deploymentColorMap[s.deployment_name] || '#1c69d4';
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {filteredSummary.map((s, index) => {
+                  const color = deploymentColorMap[s.deployment_name] || '#3b82f6';
                   const isActive = !highlighted || highlighted === s.deployment_name;
                   const isSelected = highlighted === s.deployment_name;
 
                   return (
                     <div
                       key={s.deployment_name}
-                      className="glass-card p-4 fade-in cursor-pointer"
+                      className="card-elevated p-5 fade-in cursor-pointer"
                       onClick={() => handleCardClick(s.deployment_name)}
                       style={{
-                        borderLeft: `3px solid ${color}`,
-                        opacity: isActive ? 1 : 0.4,
-                        transition: 'all 0.2s ease',
+                        borderLeft: `4px solid ${color}`,
+                        opacity: isActive ? 1 : 0.5,
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        animationDelay: `${index * 50}ms`,
                       }}
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="w-2 h-2" style={{ background: color }} />
-                          <h3 className="text-sm font-medium truncate" style={{ color: '#ffffff' }}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ background: color, boxShadow: `0 0 8px ${color}` }} />
+                          <h3 className="text-sm font-semibold truncate" style={{ color: '#ffffff' }}>
                             {s.deployment_name}
                           </h3>
                         </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <span
                             className={`badge cursor-pointer ${
                               s.cpu_classification === 'high' ? 'badge-critical' :
@@ -253,7 +254,7 @@ export default function Dashboard() {
                             title={`Filter by CPU: ${s.cpu_classification}`}
                             style={{
                               outline: cpuFilter === s.cpu_classification ? '2px solid currentColor' : 'none',
-                              outlineOffset: '1px',
+                              outlineOffset: '2px',
                             }}
                           >
                             CPU {s.cpu_classification === 'high' ? '⚠' :
@@ -268,7 +269,7 @@ export default function Dashboard() {
                             title={`Filter by RAM: ${s.ram_classification}`}
                             style={{
                               outline: ramFilter === s.ram_classification ? '2px solid currentColor' : 'none',
-                              outlineOffset: '1px',
+                              outlineOffset: '2px',
                             }}
                           >
                             RAM {s.ram_classification === 'high' ? '⚠' :
@@ -276,38 +277,38 @@ export default function Dashboard() {
                           </span>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-xs mb-1" style={{ color: '#666666', lineHeight: 1.15 }}>Avg CPU</p>
-                          <div className="flex items-baseline gap-1.5">
-                            <p className="text-lg font-mono font-semibold" style={{ color: '#1c69d4', lineHeight: 1.15 }}>
+                          <p className="text-xs mb-1.5" style={{ color: '#8e8e93', lineHeight: 1.50 }}>Avg CPU</p>
+                          <div className="flex items-baseline gap-2">
+                            <p className="text-xl font-mono font-semibold" style={{ color: '#3b82f6', lineHeight: 1.10, fontFamily: 'JetBrains Mono, monospace' }}>
                               {formatPercent(s.avg_cpu)}
                             </p>
                             <RecommendHint value={s.avg_cpu} label="Recommend request" />
                           </div>
                         </div>
                         <div>
-                          <p className="text-xs mb-1" style={{ color: '#666666', lineHeight: 1.15 }}>Max CPU</p>
-                          <div className="flex items-baseline gap-1.5">
-                            <p className="text-lg font-mono font-semibold" style={{ color: s.max_cpu > 100 ? '#ef4444' : '#ffffff', lineHeight: 1.15 }}>
+                          <p className="text-xs mb-1.5" style={{ color: '#8e8e93', lineHeight: 1.50 }}>Max CPU</p>
+                          <div className="flex items-baseline gap-2">
+                            <p className="text-xl font-mono font-semibold" style={{ color: s.max_cpu > 100 ? '#ef4444' : '#ffffff', lineHeight: 1.10, fontFamily: 'JetBrains Mono, monospace' }}>
                               {formatPercent(s.max_cpu)}
                             </p>
                             <RecommendHint value={s.max_cpu} label="Recommend limit" />
                           </div>
                         </div>
                         <div>
-                          <p className="text-xs mb-1" style={{ color: '#666666', lineHeight: 1.15 }}>Avg RAM</p>
-                          <div className="flex items-baseline gap-1.5">
-                            <p className="text-lg font-mono font-semibold" style={{ color: '#a855f7', lineHeight: 1.15 }}>
+                          <p className="text-xs mb-1.5" style={{ color: '#8e8e93', lineHeight: 1.50 }}>Avg RAM</p>
+                          <div className="flex items-baseline gap-2">
+                            <p className="text-xl font-mono font-semibold" style={{ color: '#a855f7', lineHeight: 1.10, fontFamily: 'JetBrains Mono, monospace' }}>
                               {formatPercent(s.avg_ram)}
                             </p>
                             <RecommendHint value={s.avg_ram} label="Recommend request" />
                           </div>
                         </div>
                         <div>
-                          <p className="text-xs mb-1" style={{ color: '#666666', lineHeight: 1.15 }}>Max RAM</p>
-                          <div className="flex items-baseline gap-1.5">
-                            <p className="text-lg font-mono font-semibold" style={{ color: s.max_ram > 100 ? '#ef4444' : '#ffffff', lineHeight: 1.15 }}>
+                          <p className="text-xs mb-1.5" style={{ color: '#8e8e93', lineHeight: 1.50 }}>Max RAM</p>
+                          <div className="flex items-baseline gap-2">
+                            <p className="text-xl font-mono font-semibold" style={{ color: s.max_ram > 100 ? '#ef4444' : '#ffffff', lineHeight: 1.10, fontFamily: 'JetBrains Mono, monospace' }}>
                               {formatPercent(s.max_ram)}
                             </p>
                             <RecommendHint value={s.max_ram} label="Recommend limit" />

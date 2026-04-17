@@ -29,15 +29,15 @@ export default function SpikeList() {
   };
 
   const SortIcon = ({ col }) => {
-    if (sort !== col) return <span className="opacity-30 ml-1">↕</span>;
-    return <span className="ml-1">{order === 'desc' ? '↓' : '↑'}</span>;
+    if (sort !== col) return <span className="opacity-40 ml-1.5">↕</span>;
+    return <span className="ml-1.5">{order === 'desc' ? '↓' : '↑'}</span>;
   };
 
   return (
     <div className="fade-in">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="page-header h1">Spike Events</h1>
+          <h1 className="page-header h1 text-display">Spike Events</h1>
           <p className="page-header p">
             {data?.total || 0} events detected
           </p>
@@ -47,7 +47,7 @@ export default function SpikeList() {
       <div className="glass-card overflow-hidden">
         {isLoading ? (
           <div className="p-8 space-y-3">
-            {[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton" style={{ height: '48px' }} />)}
+            {[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton" style={{ height: '56px', borderRadius: '12px' }} />)}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -66,26 +66,27 @@ export default function SpikeList() {
                 </tr>
               </thead>
               <tbody>
-                {data?.spikes?.map((spike) => {
+                {data?.spikes?.map((spike, index) => {
                   const deviation = spike.moving_average_percent > 0
                     ? ((spike.cpu_usage_percent - spike.moving_average_percent) / spike.moving_average_percent) * 100
                     : 0;
                   const severity = deviation > 200 ? 'critical' : deviation > 100 ? 'medium' : 'low';
 
                   return (
-                    <tr key={spike.id} onClick={() => setSelectedSpike(spike)} className="cursor-pointer">
-                      <td className="mono">{formatTimestamp(spike.timestamp)}</td>
-                      <td className="font-medium" style={{ color: '#ffffff' }}>{spike.deployment_name}</td>
-                      <td>{spike.namespace}</td>
-                      <td className="mono" style={{ color: '#1c69d4' }}>{formatPercent(spike.cpu_usage_percent)}</td>
+                    <tr key={spike.id} onClick={() => setSelectedSpike(spike)} className="cursor-pointer"
+                      style={{ animationDelay: `${index * 30}ms` }}>
+                      <td className="mono" style={{ color: '#8e8e93' }}>{formatTimestamp(spike.timestamp)}</td>
+                      <td className="font-semibold" style={{ color: '#ffffff' }}>{spike.deployment_name}</td>
+                      <td style={{ color: '#8e8e93' }}>{spike.namespace}</td>
+                      <td className="mono" style={{ color: '#3b82f6' }}>{formatPercent(spike.cpu_usage_percent)}</td>
                       <td className="mono" style={{ color: '#a855f7' }}>{formatPercent(spike.ram_usage_percent)}</td>
-                      <td className="mono">{formatPercent(spike.moving_average_percent)}</td>
-                      <td className="mono">{spike.route_name || '—'}</td>
-                      <td className="mono text-xs truncate max-w-32">{spike.culprit_function || '—'}</td>
+                      <td className="mono" style={{ color: '#8e8e93' }}>{formatPercent(spike.moving_average_percent)}</td>
+                      <td className="mono" style={{ color: '#8e8e93' }}>{spike.route_name || '—'}</td>
+                      <td className="mono text-xs truncate max-w-36" style={{ color: '#8e8e93' }}>{spike.culprit_function || '—'}</td>
                       <td>
                         {spike.alert_sent
                           ? <span className="badge badge-low">Sent</span>
-                          : <span className="text-xs" style={{ color: '#666666' }}>—</span>
+                          : <span className="text-xs" style={{ color: '#5f5f5f' }}>—</span>
                         }
                       </td>
                     </tr>
@@ -93,7 +94,7 @@ export default function SpikeList() {
                 })}
                 {(!data?.spikes || data.spikes.length === 0) && (
                   <tr>
-                    <td colSpan="9" className="text-center py-12" style={{ color: '#666666' }}>
+                    <td colSpan="9" className="text-center py-16" style={{ color: '#5f5f5f' }}>
                       No spike events recorded yet
                     </td>
                   </tr>
@@ -104,22 +105,21 @@ export default function SpikeList() {
         )}
       </div>
 
-      {/* Detail modal */}
       {selectedSpike && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}
           onClick={() => setSelectedSpike(null)}>
-          <div className="glass-card p-6 max-w-lg w-full mx-4 fade-in" onClick={(e) => e.stopPropagation()}
-            style={{ border: '2px solid #333333' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-normal">Spike Details</h2>
-              <button onClick={() => setSelectedSpike(null)} className="text-lg cursor-pointer"
-                style={{ color: '#666666', background: 'none', border: 'none' }}>✕</button>
+          <div className="glass-card p-6 max-w-lg w-full fade-in" onClick={(e) => e.stopPropagation()}
+            style={{ border: '1px solid #333333', borderRadius: '20px' }}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-semibold text-display">Spike Details</h2>
+              <button onClick={() => setSelectedSpike(null)} className="text-xl cursor-pointer w-8 h-8 flex items-center justify-center rounded-full"
+                style={{ color: '#8e8e93', background: 'rgba(255,255,255,0.05)', border: 'none' }}>✕</button>
             </div>
             <div className="space-y-0 text-sm">
               <Row label="Deployment" value={selectedSpike.deployment_name} />
               <Row label="Namespace" value={selectedSpike.namespace} />
               <Row label="Timestamp" value={formatTimestamp(selectedSpike.timestamp)} mono />
-              <Row label="CPU Usage" value={formatPercent(selectedSpike.cpu_usage_percent)} color="#1c69d4" />
+              <Row label="CPU Usage" value={formatPercent(selectedSpike.cpu_usage_percent)} color="#3b82f6" />
               <Row label="RAM Usage" value={formatPercent(selectedSpike.ram_usage_percent)} color="#a855f7" />
               <Row label="Moving Average" value={formatPercent(selectedSpike.moving_average_percent)} />
               <Row label="Threshold" value={formatPercent(selectedSpike.threshold_percent)} />
@@ -156,9 +156,9 @@ export default function SpikeList() {
 
 function Row({ label, value, mono, color }) {
   return (
-    <div className="flex justify-between py-2.5" style={{ borderBottom: '1px solid #333333' }}>
-      <span style={{ color: '#666666' }}>{label}</span>
-      <span className={mono ? 'font-mono text-xs' : ''} style={{ color: color || '#ffffff' }}>
+    <div className="flex justify-between py-3" style={{ borderBottom: '1px solid #2a2a2a' }}>
+      <span style={{ color: '#8e8e93' }}>{label}</span>
+      <span className={mono ? 'font-mono text-xs' : ''} style={{ color: color || '#f0f0f0', fontFamily: mono ? 'JetBrains Mono, monospace' : 'inherit' }}>
         {value}
       </span>
     </div>

@@ -2,18 +2,29 @@
 
 @theme {
   --color-white: #ffffff;
-  --color-bmw-blue: #1c69d4;
-  --color-bmw-focus: #0653b6;
-  --color-dark-bg: #0d0d0d;
-  --color-dark-surface: #1a1a1a;
-  --color-dark-card: #262626;
-  --color-dark-border: #333333;
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #a0a0a0;
-  --color-text-muted: #666666;
-  --color-border: #333333;
-  --color-border-light: #404040;
-  --font-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --color-brand-6: #1456f0;
+  --color-brand-00: #3daeff;
+  --color-brand-02: #ea5ec1;
+  --color-primary-200: #bfdbfe;
+  --color-primary-light: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-brand-3: #17437d;
+  --color-text-00: #f0f0f0;
+  --color-text-01: #18181b;
+  --color-dark-surface: #181e25;
+  --color-text-04: #45515e;
+  --color-text-05: #8e8e93;
+  --color-brand-2: #5f5f5f;
+  --color-bg-13: #ffffff;
+  --color-bg-00: #f0f0f0;
+  --color-fill-bg-white: hsla(0, 0%, 100%, 0.4);
+  --color-border-light: #f2f3f5;
+  --color-border-gray: #e5e7eb;
+  --color-success-bg: #e8ffea;
+  --font-sans: 'DM Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-display: 'Outfit', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
@@ -26,8 +37,8 @@
 html, body, #root {
   height: 100%;
   width: 100%;
-  background: var(--color-dark-bg);
-  color: var(--color-text-primary);
+  background: #181e25;
+  color: var(--color-text-00);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -38,78 +49,83 @@ html, body, #root {
   height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-dark-bg);
+  background: #181e25;
 }
 ::-webkit-scrollbar-thumb {
-  background: #444444;
+  background: #333333;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-bmw-blue);
+  background: var(--color-primary-500);
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 400;
-  line-height: 1.30;
+  font-weight: 500;
+  line-height: 1.50;
   letter-spacing: -0.01em;
 }
 
 .glass-card {
-  background: var(--color-dark-card);
-  border: 1px solid var(--color-dark-border);
-  border-radius: 0;
-  transition: border-color 0.2s;
+  background: #222222;
+  border: 1px solid #333333;
+  border-radius: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .glass-card:hover {
-  border-color: var(--color-bmw-blue);
+  border-color: var(--color-primary-500);
+  box-shadow: 0 8px 32px rgba(20, 86, 240, 0.15);
 }
 
 .btn {
-  padding: 10px 20px;
-  border-radius: 0;
-  font-size: 16px;
-  font-weight: 400;
+  padding: 11px 20px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid transparent;
   text-decoration: none;
   display: inline-block;
-  line-height: 1.20;
+  line-height: 1.50;
 }
 .btn-primary {
-  background: var(--color-bmw-blue);
-  color: var(--color-white);
-  font-weight: 700;
-  border: 1px solid var(--color-bmw-blue);
+  background: var(--color-primary-500);
+  color: #ffffff;
+  font-weight: 600;
+  border: 1px solid var(--color-primary-500);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
 }
 .btn-primary:hover {
-  background: var(--color-bmw-focus);
-  border-color: var(--color-bmw-focus);
+  background: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
 }
 .btn-primary:focus {
-  outline: 2px solid var(--color-bmw-focus);
+  outline: 2px solid var(--color-primary-600);
   outline-offset: 2px;
 }
 .btn-ghost {
-  background: transparent;
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-dark-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-00);
+  border: 1px solid #333333;
+  border-radius: 8px;
 }
 .btn-ghost:hover {
-  background: var(--color-dark-card);
-  color: var(--color-text-primary);
-  border-color: #555555;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: #444444;
 }
 .btn-ghost.active {
-  background: rgba(28, 105, 212, 0.15);
-  color: var(--color-bmw-blue);
-  border: 1px solid var(--color-bmw-blue);
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--color-primary-light);
+  border: 1px solid var(--color-primary-500);
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: 0;
+  padding: 4px 10px;
+  border-radius: 9999px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -121,14 +137,14 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid rgba(239, 68, 68, 0.4);
 }
 .badge-medium {
-  background: rgba(217, 119, 6, 0.15);
+  background: rgba(245, 158, 11, 0.15);
   color: #f59e0b;
-  border: 1px solid rgba(217, 119, 6, 0.4);
+  border: 1px solid rgba(245, 158, 11, 0.4);
 }
 .badge-low {
-  background: rgba(22, 197, 94, 0.15);
+  background: rgba(34, 197, 94, 0.15);
   color: #22c55e;
-  border: 1px solid rgba(22, 197, 94, 0.4);
+  border: 1px solid rgba(34, 197, 94, 0.4);
 }
 
 .data-table {
@@ -137,30 +153,30 @@ h1, h2, h3, h4, h5, h6 {
 }
 .data-table th {
   text-align: left;
-  padding: 12px 16px;
+  padding: 14px 18px;
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-text-secondary);
-  border-bottom: 2px solid var(--color-dark-border);
+  letter-spacing: 0.8px;
+  color: var(--color-text-05);
+  border-bottom: 1px solid #333333;
   cursor: pointer;
   user-select: none;
-  background: var(--color-dark-surface);
+  background: #1a1a1a;
+  border-radius: 8px 8px 0 0;
 }
 .data-table th:hover {
-  color: var(--color-text-primary);
+  color: #ffffff;
 }
 .data-table td {
-  padding: 14px 16px;
+  padding: 16px 18px;
   font-size: 14px;
-  border-bottom: 1px solid var(--color-border-light);
-  color: var(--color-text-secondary);
-  line-height: 1.15;
+  border-bottom: 1px solid #2a2a2a;
+  color: var(--color-text-00);
+  line-height: 1.50;
 }
 .data-table tr:hover td {
-  background: rgba(28, 105, 212, 0.05);
-  color: var(--color-text-primary);
+  background: rgba(59, 130, 246, 0.05);
 }
 .data-table .mono {
   font-family: var(--font-mono);
@@ -172,18 +188,18 @@ h1, h2, h3, h4, h5, h6 {
   100% { background-position: 200% 0; }
 }
 .skeleton {
-  background: linear-gradient(90deg, #262626 25%, #333333 50%, #262626 75%);
+  background: linear-gradient(90deg, #1a1a1a 25%, #222222 50%, #1a1a1a 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 0;
+  border-radius: 13px;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes pulse-dot {
@@ -200,56 +216,98 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .input {
-  background: var(--color-dark-card);
-  border: 1px solid var(--color-dark-border);
-  border-radius: 0;
-  padding: 10px 12px;
-  color: var(--color-text-primary);
+  background: #1a1a1a;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #ffffff;
   font-size: 14px;
   font-family: var(--font-sans);
   outline: none;
-  transition: border-color 0.2s;
-  line-height: 1.15;
+  transition: all 0.2s;
+  line-height: 1.50;
 }
 .input:focus {
-  border-color: var(--color-bmw-focus);
-  outline: 2px solid rgba(28, 105, 212, 0.3);
-  outline-offset: 0;
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .select {
-  background: var(--color-dark-card);
-  border: 1px solid var(--color-dark-border);
-  border-radius: 0;
-  padding: 10px 32px 10px 12px;
-  color: var(--color-text-primary);
+  background: #1a1a1a;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  padding: 10px 32px 10px 14px;
+  color: #ffffff;
   font-size: 14px;
   font-family: var(--font-sans);
   outline: none;
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  line-height: 1.15;
+  background-position: right 12px center;
+  line-height: 1.50;
+  transition: all 0.2s;
 }
 .select:focus {
-  border-color: var(--color-bmw-focus);
-  outline: 2px solid rgba(28, 105, 212, 0.3);
-  outline-offset: 0;
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .page-header h1 {
   font-size: 32px;
-  font-weight: 300;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  color: var(--color-text-primary);
-  line-height: 1.30;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.10;
+  font-family: var(--font-display);
 }
 .page-header p {
   font-size: 14px;
-  color: var(--color-text-secondary);
-  margin-top: 4px;
-  line-height: 1.15;
+  color: var(--color-text-05);
+  margin-top: 6px;
+  line-height: 1.50;
+}
+
+.nav-pill {
+  padding: 8px 20px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-05);
+}
+.nav-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+.nav-pill.active {
+  background: var(--color-primary-500);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.card-elevated {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  box-shadow: rgba(44, 30, 116, 0.11) 6.5px 2px 17.5px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-elevated:hover {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.2);
+}
+
+.text-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 1.10;
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, var(--color-brand-6), var(--color-brand-00));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

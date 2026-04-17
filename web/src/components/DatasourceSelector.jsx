@@ -23,22 +23,23 @@ export default function DatasourceSelector() {
     window.location.reload();
   };
 
-  if (isLoading) return <div className="text-xs" style={{ color: '#666666' }}>Loading sources...</div>;
+  if (isLoading) return <div className="text-xs" style={{ color: '#8e8e93' }}>Loading sources...</div>;
   if (!data?.datasources?.length) return null;
 
   return (
-    <div className="flex items-center gap-2">
-      <label className="text-xs whitespace-nowrap" style={{ color: '#666666', fontWeight: 400 }}>Datasource:</label>
+    <div className="flex items-center gap-3">
+      <label className="text-xs whitespace-nowrap font-medium" style={{ color: '#8e8e93', letterSpacing: '0.5px' }}>DATASOURCE</label>
       <select
         value={active}
         onChange={handleChange}
         className="select"
-        style={{ 
-          padding: '4px 24px 4px 8px', 
-          fontSize: '11px',
+        style={{
+          padding: '6px 28px 6px 10px',
+          fontSize: '12px',
           background: '#1a1a1a',
           color: '#ffffff',
-          border: '1px solid #333',
+          border: '1px solid #333333',
+          borderRadius: '8px',
         }}
       >
         {data.datasources.map(ds => (

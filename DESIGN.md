@@ -1,180 +1,257 @@
-# Design System Inspired by BMW
+# Design System Inspired by MiniMax
 
 ## 1. Visual Theme & Atmosphere
 
-BMW's website is automotive engineering made visual — a design system that communicates precision, performance, and German industrial confidence. The page alternates between deep dark hero sections (featuring full-bleed automotive photography) and clean white content areas, creating a cinematic rhythm reminiscent of a luxury car showroom where vehicles are lit against darkness. The BMW CI2020 design language (their corporate identity refresh) defines every element.
+MiniMax's website is a clean, product-showcase platform for a Chinese AI technology company that bridges consumer-friendly appeal with technical credibility. The design language is predominantly white-space-driven with a light, airy feel — pure white backgrounds (`#ffffff`) dominate, letting colorful product cards and AI model illustrations serve as the visual anchors. The overall aesthetic sits at the intersection of Apple's product marketing clarity and a playful, rounded design language that makes AI technology feel approachable.
 
-The typography is built on BMWTypeNextLatin — a proprietary typeface in two variants: BMWTypeNextLatin Light (weight 300) for massive uppercase display headings, and BMWTypeNextLatin Regular for body and UI text. The 60px uppercase headline at weight 300 is the defining typographic gesture — light-weight type that whispers authority rather than shouting it. The fallback stack includes Helvetica and Japanese fonts (Hiragino, Meiryo), reflecting BMW's global presence.
+The typography system is notably multi-font: DM Sans serves as the primary UI workhorse, Outfit handles display headings with geometric elegance, Poppins appears for mid-tier headings, and Roboto handles data-heavy contexts. This variety reflects a brand in rapid growth — each font serves a distinct communicative purpose rather than competing for attention. The hero heading at 80px weight 500 in both DM Sans and Outfit with a tight 1.10 line-height creates a bold but not aggressive opening statement.
 
-What makes BMW distinctive is its CSS variable-driven theming system. Context-aware variables (`--site-context-highlight-color: #1c69d4`, `--site-context-focus-color: #0653b6`, `--site-context-metainfo-color: #757575`) suggest a design system built for multi-brand, multi-context deployment where colors can be swapped globally. The blue highlight color (`#1c69d4`) is BMW's signature blue — used sparingly for interactive elements and focus states, never decoratively. Zero border-radius was detected — BMW's design is angular, sharp-cornered, and uncompromisingly geometric.
+What makes MiniMax distinctive is its pill-button geometry (9999px radius) for navigation and primary actions, combined with softer 8px–24px radiused cards for product showcases. The product cards themselves are richly colorful — vibrant gradients in pink, purple, orange, and blue — creating a "gallery of AI capabilities" feel. Against the white canvas, these colorful cards pop like app icons on a phone home screen, making each AI model/product feel like a self-contained creative tool.
 
 **Key Characteristics:**
-- BMWTypeNextLatin Light (weight 300) uppercase for display — whispered authority
-- BMW Blue (`#1c69d4`) as singular accent — used only for interactive elements
-- Zero border-radius detected — angular, sharp-cornered, industrial geometry
-- Dark hero photography + white content sections — showroom lighting rhythm
-- CSS variable-driven theming: `--site-context-*` tokens for brand flexibility
-- Weight 900 for navigation emphasis — extreme contrast with 300 display
-- Tight line-heights (1.15–1.30) throughout — compressed, efficient, German engineering
-- Full-bleed automotive photography as primary visual content
+- White-dominant layout with colorful product card accents
+- Multi-font system: DM Sans (UI), Outfit (display), Poppins (mid-tier), Roboto (data)
+- Pill buttons (9999px radius) for primary navigation and CTAs
+- Generous rounded cards (20px–24px radius) for product showcases
+- Brand blue spectrum: from `#1456f0` (brand-6) through `#3b82f6` (primary-500) to `#60a5fa` (light)
+- Brand pink (`#ea5ec1`) as secondary accent
+- Near-black text (`#222222`, `#18181b`) on white backgrounds
+- Purple-tinted shadows (`rgba(44, 30, 116, 0.16)`) creating subtle brand-colored depth
+- Dark footer section (`#181e25`) with product/company links
 
 ## 2. Color Palette & Roles
 
-### Primary Brand
-- **Pure White** (`#ffffff`): `--site-context-theme-color`, primary surface, card backgrounds
-- **BMW Blue** (`#1c69d4`): `--site-context-highlight-color`, primary interactive accent
-- **BMW Focus Blue** (`#0653b6`): `--site-context-focus-color`, keyboard focus and active states
+### Brand Primary
+- **Brand Blue** (`#1456f0`): `--brand-6`, primary brand identity color
+- **Sky Blue** (`#3daeff`): `--col-brand00`, lighter brand variant for accents
+- **Brand Pink** (`#ea5ec1`): `--col-brand02`, secondary brand accent
 
-### Neutral Scale
-- **Near Black** (`#262626`): Primary text on light surfaces, dark link text
-- **Meta Gray** (`#757575`): `--site-context-metainfo-color`, secondary text, metadata
-- **Silver** (`#bbbbbb`): Tertiary text, muted links, footer elements
+### Blue Scale (Primary)
+- **Primary 200** (`#bfdbfe`): `--color-primary-200`, light blue backgrounds
+- **Primary Light** (`#60a5fa`): `--color-primary-light`, active states, highlights
+- **Primary 500** (`#3b82f6`): `--color-primary-500`, standard blue actions
+- **Primary 600** (`#2563eb`): `--color-primary-600`, hover states
+- **Primary 700** (`#1d4ed8`): `--color-primary-700`, pressed/active states
+- **Brand Deep** (`#17437d`): `--brand-3`, deep blue for emphasis
 
-### Interactive States
-- All links hover to white (`#ffffff`) — suggesting primarily dark-surface navigation
-- Text links use underline: none on hover — clean interaction
+### Text Colors
+- **Near Black** (`#222222`): `--col-text00`, primary text
+- **Dark** (`#18181b`): Button text, headings
+- **Charcoal** (`#181e25`): Dark surface text, footer background
+- **Dark Gray** (`#45515e`): `--col-text04`, secondary text
+- **Mid Gray** (`#8e8e93`): Tertiary text, muted labels
+- **Light Gray** (`#5f5f5f`): `--brand-2`, helper text
+
+### Surface & Background
+- **Pure White** (`#ffffff`): `--col-bg13`, primary background
+- **Light Gray** (`#f0f0f0`): Secondary button backgrounds
+- **Glass White** (`hsla(0, 0%, 100%, 0.4)`): `--fill-bg-white`, frosted glass overlay
+- **Border Light** (`#f2f3f5`): Subtle section dividers
+- **Border Gray** (`#e5e7eb`): Component borders
+
+### Semantic
+- **Success Background** (`#e8ffea`): `--success-bg`, positive state backgrounds
 
 ### Shadows
-- Minimal shadow system — depth through photography and dark/light section contrast
+- **Standard** (`rgba(0, 0, 0, 0.08) 0px 4px 6px`): Default card shadow
+- **Soft Glow** (`rgba(0, 0, 0, 0.08) 0px 0px 22.576px`): Ambient soft shadow
+- **Brand Purple** (`rgba(44, 30, 116, 0.16) 0px 0px 15px`): Brand-tinted glow
+- **Brand Purple Offset** (`rgba(44, 30, 116, 0.11) 6.5px 2px 17.5px`): Directional brand glow
+- **Card Elevation** (`rgba(36, 36, 36, 0.08) 0px 12px 16px -4px`): Lifted card shadow
 
 ## 3. Typography Rules
 
 ### Font Families
-- **Display Light**: `BMWTypeNextLatin Light`, fallbacks: `Helvetica, Arial, Hiragino Kaku Gothic ProN, Hiragino Sans, Meiryo`
-- **Body / UI**: `BMWTypeNextLatin`, same fallback stack
+- **Primary UI**: `DM Sans`, with fallbacks: `Helvetica Neue, Helvetica, Arial`
+- **Display**: `Outfit`, with fallbacks: `Helvetica Neue, Helvetica, Arial`
+- **Mid-tier**: `Poppins`
+- **Data/Technical**: `Roboto`, with fallbacks: `Helvetica Neue, Helvetica, Arial`
 
 ### Hierarchy
 
 | Role | Font | Size | Weight | Line Height | Notes |
 |------|------|------|--------|-------------|-------|
-| Display Hero | BMWTypeNextLatin Light | 60px (3.75rem) | 300 | 1.30 (tight) | `text-transform: uppercase` |
-| Section Heading | BMWTypeNextLatin | 32px (2.00rem) | 400 | 1.30 (tight) | Major section titles |
-| Nav Emphasis | BMWTypeNextLatin | 18px (1.13rem) | 900 | 1.30 (tight) | Navigation bold items |
-| Body | BMWTypeNextLatin | 16px (1.00rem) | 400 | 1.15 (tight) | Standard body text |
-| Button Bold | BMWTypeNextLatin | 16px (1.00rem) | 700 | 1.20–2.88 | CTA buttons |
-| Button | BMWTypeNextLatin | 16px (1.00rem) | 400 | 1.15 (tight) | Standard buttons |
+| Display Hero | DM Sans / Outfit | 80px (5.00rem) | 500 | 1.10 (tight) | Hero headlines |
+| Section Heading | Outfit | 31px (1.94rem) | 600 | 1.50 | Feature section titles |
+| Section Heading Alt | Roboto / DM Sans | 32px (2.00rem) | 600 | 0.88 (tight) | Compact headers |
+| Card Title | Outfit | 28px (1.75rem) | 500–600 | 1.71 (relaxed) | Product card headings |
+| Sub-heading | Poppins | 24px (1.50rem) | 500 | 1.50 | Mid-tier headings |
+| Feature Label | Poppins | 18px (1.13rem) | 500 | 1.50 | Feature names |
+| Body Large | DM Sans | 20px (1.25rem) | 500 | 1.50 | Emphasized body |
+| Body | DM Sans | 16px (1.00rem) | 400–500 | 1.50 | Standard body text |
+| Body Bold | DM Sans | 16px (1.00rem) | 700 | 1.50 | Strong emphasis |
+| Nav/Link | DM Sans | 14px (0.88rem) | 400–500 | 1.50 | Navigation, links |
+| Button Small | DM Sans | 13px (0.81rem) | 600 | 1.50 | Compact buttons |
+| Caption | DM Sans / Poppins | 13px (0.81rem) | 400 | 1.70 (relaxed) | Metadata |
+| Small Label | DM Sans | 12px (0.75rem) | 500–600 | 1.25–1.50 | Tags, badges |
+| Micro | DM Sans / Outfit | 10px (0.63rem) | 400–500 | 1.50–1.80 | Tiny annotations |
 
 ### Principles
-- **Light display, heavy navigation**: Weight 300 for hero headlines creates whispered elegance; weight 900 for navigation creates stark authority. This extreme weight contrast (300 vs 900) is the signature typographic tension.
-- **Universal uppercase display**: The 60px hero is always uppercase — creating a monumental, architectural quality.
-- **Tight everything**: Line-heights from 1.15 to 1.30 across the entire system. Nothing breathes — every line is compressed, efficient, German-engineered.
-- **Single font family**: BMWTypeNextLatin handles everything from 60px display to 16px body — unity through one typeface at different weights.
+- **Multi-font purpose**: DM Sans = UI workhorse (body, nav, buttons); Outfit = geometric display (headings, product names); Poppins = friendly mid-tier (sub-headings, features); Roboto = technical/data contexts.
+- **Universal 1.50 line-height**: The overwhelming majority of text uses 1.50 line-height, creating a consistent reading rhythm regardless of font or size. Exceptions: display (1.10 tight) and some captions (1.70 relaxed).
+- **Weight 500 as default emphasis**: Most headings use 500 (medium) rather than bold, creating a modern, approachable tone. 600 for section titles, 700 reserved for strong emphasis.
+- **Compact hierarchy**: The size scale jumps from 80px display straight to 28–32px section, then 16–20px body — a deliberate compression that keeps the visual hierarchy feeling efficient.
 
 ## 4. Component Stylings
 
 ### Buttons
-- Text: 16px BMWTypeNextLatin, weight 700 for primary, 400 for secondary
-- Line-height: 1.15–2.88 (large variation suggests padding-driven sizing)
-- Border: white bottom-border on dark surfaces (`1px solid #ffffff`)
-- No border-radius — sharp rectangular buttons
 
-### Cards & Containers
-- No border-radius — all containers are sharp-cornered rectangles
-- White backgrounds on light sections
-- Dark backgrounds for hero/feature sections
-- No visible borders on most elements
+**Pill Primary Dark**
+- Background: `#181e25`
+- Text: `#ffffff`
+- Padding: 11px 20px
+- Radius: 8px
+- Use: Primary CTA ("Get Started", "Learn More")
+
+**Pill Nav**
+- Background: `rgba(0, 0, 0, 0.05)` (subtle tint)
+- Text: `#18181b`
+- Radius: 9999px (full pill)
+- Use: Navigation tabs, filter toggles
+
+**Pill White**
+- Background: `#ffffff`
+- Text: `rgba(24, 30, 37, 0.8)`
+- Radius: 9999px
+- Opacity: 0.5 (default state)
+- Use: Secondary nav, inactive tabs
+
+**Secondary Light**
+- Background: `#f0f0f0`
+- Text: `#333333`
+- Padding: 11px 20px
+- Radius: 8px
+- Use: Secondary actions
+
+### Product Cards
+- Background: Vibrant gradients (pink/purple/orange/blue)
+- Radius: 20px–24px (generous rounding)
+- Shadow: `rgba(44, 30, 116, 0.16) 0px 0px 15px` (brand purple glow)
+- Content: Product name, model version, descriptive text
+- Each card has its own color palette matching the product identity
+
+### AI Product Cards (Matrix)
+- Background: white with subtle shadow
+- Radius: 13px–16px
+- Shadow: `rgba(0, 0, 0, 0.08) 0px 4px 6px`
+- Icon/illustration centered above product name
+- Product name in DM Sans 14–16px weight 500
+
+### Links
+- **Primary**: `#18181b` or `#181e25`, underline on dark text
+- **Secondary**: `#8e8e93`, muted for less emphasis
+- **On Dark**: `rgba(255, 255, 255, 0.8)` for footer and dark sections
 
 ### Navigation
-- BMWTypeNextLatin 18px weight 900 for primary nav links
-- White text on dark header
-- BMW logo 54x54px
-- Hover: remains white, text-decoration none
-- "Home" text link in header
-
-### Image Treatment
-- Full-bleed automotive photography
-- Dark cinematic lighting
-- Edge-to-edge hero images
-- Car photography as primary visual content
+- Clean horizontal nav on white background
+- MiniMax logo left-aligned (red accent in logo)
+- DM Sans 14px weight 500 for nav items
+- Pill-shaped active indicators (9999px radius)
+- "Login" text link, minimal right-side actions
+- Sticky header behavior
 
 ## 5. Layout Principles
 
 ### Spacing System
 - Base unit: 8px
-- Scale: 1px, 5px, 8px, 10px, 12px, 15px, 16px, 20px, 24px, 30px, 32px, 40px, 45px, 56px, 60px
+- Scale: 1px, 2px, 4px, 6px, 8px, 10px, 11px, 14px, 16px, 24px, 32px, 40px, 50px, 64px, 80px
 
 ### Grid & Container
-- Full-width hero photography
-- Centered content sections
-- Footer: multi-column link grid
+- Max content width centered on page
+- Product card grids: horizontal scroll or 3–4 column layout
+- Full-width white sections with contained content
+- Dark footer at full-width
+
+### Breakpoints
+| Name | Width | Key Changes |
+|------|-------|-------------|
+| Mobile | <768px | Single column, stacked cards |
+| Tablet | 768–1024px | 2-column grids |
+| Desktop | >1024px | Full layout, horizontal card scrolls |
 
 ### Whitespace Philosophy
-- **Showroom pacing**: Dark hero sections with generous padding create the feeling of walking through a showroom where each vehicle is spotlit in its own space.
-- **Compressed content**: Body text areas use tight line-heights and compact spacing — information-dense, no waste.
+- **Gallery spacing**: Products are presented like gallery items with generous white space between cards, letting each AI model breathe as its own showcase.
+- **Section rhythm**: Large vertical gaps (64px–80px) between major sections create distinct "chapters" of content.
+- **Card breathing**: Product cards use internal padding of 16px–24px with ample whitespace around text.
 
 ### Border Radius Scale
-- **None detected.** BMW uses sharp corners exclusively — every element is a precise rectangle. This is the most angular design system analyzed.
+- Minimal (4px): Small tags, micro badges
+- Standard (8px): Buttons, small cards
+- Comfortable (11px–13px): Medium cards, panels
+- Generous (16px–20px): Large product cards
+- Large (22px–24px): Hero product cards, major containers
+- Pill (30px–32px): Badge pills, rounded panels
+- Full (9999px): Buttons, nav tabs
 
 ## 6. Depth & Elevation
 
 | Level | Treatment | Use |
 |-------|-----------|-----|
-| Photography (Level 0) | Full-bleed dark imagery | Hero backgrounds |
-| Flat (Level 1) | White surface, no shadow | Content sections |
-| Focus (Accessibility) | BMW Focus Blue (`#0653b6`) | Focus states |
+| Flat (Level 0) | No shadow | White background, text blocks |
+| Subtle (Level 1) | `rgba(0, 0, 0, 0.08) 0px 4px 6px` | Standard cards, containers |
+| Ambient (Level 2) | `rgba(0, 0, 0, 0.08) 0px 0px 22.576px` | Soft glow around elements |
+| Brand Glow (Level 3) | `rgba(44, 30, 116, 0.16) 0px 0px 15px` | Featured product cards |
+| Elevated (Level 4) | `rgba(36, 36, 36, 0.08) 0px 12px 16px -4px` | Lifted cards, hover states |
 
-**Shadow Philosophy**: BMW uses virtually no shadows. Depth is created entirely through the contrast between dark photographic sections and white content sections — the automotive lighting does the elevation work.
+**Shadow Philosophy**: MiniMax uses a distinctive purple-tinted shadow (`rgba(44, 30, 116, ...)`) for featured elements, creating a subtle brand-color glow that connects the shadow system to the blue brand identity. Standard shadows use neutral black but at low opacity (0.08), keeping everything feeling light and airy. The directional shadow variant (6.5px offset) adds dimensional interest to hero product cards.
 
 ## 7. Do's and Don'ts
 
 ### Do
-- Use BMWTypeNextLatin Light (300) uppercase for all display headings
-- Keep ALL corners sharp (0px radius) — angular geometry is non-negotiable
-- Use BMW Blue (`#1c69d4`) only for interactive elements — never decoratively
-- Apply weight 900 for navigation emphasis — the extreme weight contrast is intentional
-- Use full-bleed automotive photography for hero sections
-- Keep line-heights tight (1.15–1.30) throughout
-- Use `--site-context-*` CSS variables for theming
+- Use white as the dominant background — let product cards provide the color
+- Apply pill radius (9999px) for navigation tabs and toggle buttons
+- Use generous border radius (20px–24px) for product showcase cards
+- Employ the purple-tinted shadow for featured/hero product cards
+- Keep body text at DM Sans weight 400–500 — heavier weights for buttons only
+- Use Outfit for display headings, DM Sans for everything functional
+- Maintain the universal 1.50 line-height across body text
+- Let colorful product illustrations/gradients serve as the primary visual interest
 
 ### Don't
-- Don't round corners — zero radius is the BMW identity
-- Don't use BMW Blue for backgrounds or large surfaces — it's an accent only
-- Don't use medium font weights (500–600) — the system uses 300, 400, 700, 900 extremes
-- Don't add decorative elements — the photography and typography carry everything
-- Don't use relaxed line-heights — BMW text is always compressed
-- Don't lighten the dark hero sections — the contrast with white IS the design
+- Don't add colored backgrounds to main content sections — white is structural
+- Don't use sharp corners (0–4px radius) on product cards — the rounded aesthetic is core
+- Don't apply the brand pink (`#ea5ec1`) to text or buttons — it's for logo and decorative accents only
+- Don't mix more than one display font per section (Outfit OR Poppins, not both)
+- Don't use weight 700 for headings — 500–600 is the range, 700 is reserved for strong emphasis in body text
+- Don't darken shadows beyond 0.16 opacity — the light, airy feel requires restraint
+- Don't use Roboto for headings — it's the data/technical context font only
 
 ## 8. Responsive Behavior
 
 ### Breakpoints
 | Name | Width | Key Changes |
 |------|-------|-------------|
-| Mobile Small | <375px | Minimum supported |
-| Mobile | 375–480px | Single column |
-| Mobile Large | 480–640px | Slight adjustments |
-| Tablet Small | 640–768px | 2-column begins |
-| Tablet | 768–920px | Standard tablet |
-| Desktop Small | 920–1024px | Desktop layout begins |
-| Desktop | 1024–1280px | Standard desktop |
-| Large Desktop | 1280–1440px | Expanded |
-| Ultra-wide | 1440–1600px | Maximum layout |
+| Mobile | <768px | Single column, stacked product cards, hamburger nav |
+| Tablet | 768–1024px | 2-column product grids, condensed spacing |
+| Desktop | >1024px | Full horizontal card layouts, expanded spacing |
 
 ### Collapsing Strategy
-- Hero: 60px → scales down, maintains uppercase
-- Navigation: horizontal → hamburger
-- Photography: full-bleed maintained at all sizes
-- Content sections: stack vertically
-- Footer: multi-column → stacked
+- Hero: 80px → responsive scaling to ~40px on mobile
+- Product card grid: horizontal scroll → 2-column → single column stacked
+- Navigation: horizontal → hamburger menu
+- Footer: multi-column → stacked sections
+- Spacing: 64–80px gaps → 32–40px on mobile
 
 ## 9. Agent Prompt Guide
 
 ### Quick Color Reference
-- Background: Pure White (`#ffffff`)
-- Text: Near Black (`#262626`)
-- Secondary text: Meta Gray (`#757575`)
-- Accent: BMW Blue (`#1c69d4`)
-- Focus: BMW Focus Blue (`#0653b6`)
-- Muted: Silver (`#bbbbbb`)
+- Background: `#ffffff` (primary), `#181e25` (dark/footer)
+- Text: `#222222` (primary), `#45515e` (secondary), `#8e8e93` (muted)
+- Brand Blue: `#1456f0` (brand), `#3b82f6` (primary-500), `#2563eb` (hover)
+- Brand Pink: `#ea5ec1` (accent only)
+- Borders: `#e5e7eb`, `#f2f3f5`
 
 ### Example Component Prompts
-- "Create a hero: full-width dark automotive photography background. Heading at 60px BMWTypeNextLatin Light weight 300, uppercase, line-height 1.30, white text. No border-radius anywhere."
-- "Design navigation: dark background. BMWTypeNextLatin 18px weight 900 for links, white text. BMW logo 54x54. Sharp rectangular layout."
-- "Build a button: 16px BMWTypeNextLatin weight 700, line-height 1.20. Sharp corners (0px radius). White bottom border on dark surface."
-- "Create content section: white background. Heading at 32px weight 400, line-height 1.30, #262626. Body at 16px weight 400, line-height 1.15."
+- "Create a hero section on white background. Headline at 80px Outfit weight 500, line-height 1.10, near-black (#222222) text. Sub-text at 16px DM Sans weight 400, line-height 1.50, #45515e. Dark CTA button (#181e25, 8px radius, 11px 20px padding, white text)."
+- "Design a product card grid: white cards with 20px border-radius, shadow rgba(44,30,116,0.16) 0px 0px 15px. Product name at 28px Outfit weight 600. Internal gradient background for the product illustration area."
+- "Build navigation bar: white background, DM Sans 14px weight 500 for links, #18181b text. Pill-shaped active tab (9999px radius, rgba(0,0,0,0.05) background). MiniMax logo left-aligned."
+- "Create an AI product matrix: 4-column grid of cards with 13px radius, subtle shadow rgba(0,0,0,0.08) 0px 4px 6px. Centered icon above product name in DM Sans 16px weight 500."
+- "Design footer on dark (#181e25) background. Product links in DM Sans 14px, rgba(255,255,255,0.8). Multi-column layout."
 
 ### Iteration Guide
-1. Zero border-radius — every corner is sharp, no exceptions
-2. Weight extremes: 300 (display), 400 (body), 700 (buttons), 900 (nav)
-3. BMW Blue for interactive only — never as background or decoration
-4. Photography carries emotion — the UI is pure precision
-5. Tight line-heights everywhere — 1.15 to 1.30 is the range
+1. Start with white — color comes from product cards and illustrations only
+2. Pill buttons (9999px) for nav/tabs, standard radius (8px) for CTA buttons
+3. Purple-tinted shadows for featured cards, neutral shadows for everything else
+4. DM Sans handles 70% of text — Outfit is display-only, Poppins is mid-tier only
+5. Keep weights moderate (500–600 for headings) — the brand tone is confident but approachable
+6. Large radius cards (20–24px) for products, smaller radius (8–13px) for UI elements
