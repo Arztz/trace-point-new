@@ -93,7 +93,7 @@ func (c *Client) QueryInstantMetrics() ([]domain.ContainerMetrics, error) {
 	for _, ram := range ramMetrics {
 		key := ram.DeploymentName + "/" + ram.Namespace
 		if m, ok := merged[key]; ok {
-			m.RAMPercent = ram.RAMPercent
+			m.RAMPercent = ram.CPUPercent
 		} else {
 			r := ram
 			merged[key] = &r

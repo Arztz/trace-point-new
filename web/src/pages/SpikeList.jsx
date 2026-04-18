@@ -34,7 +34,7 @@ export default function SpikeList() {
   };
 
   return (
-    <div className="fade-in">
+    <div>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="page-header h1 text-display">Spike Events</h1>
@@ -106,7 +106,7 @@ export default function SpikeList() {
       </div>
 
       {selectedSpike && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)' }}
           onClick={() => setSelectedSpike(null)}>
           <div className="glass-card p-6 max-w-lg w-full fade-in" onClick={(e) => e.stopPropagation()}
             style={{ border: '1px solid #333333', borderRadius: '20px' }}>
