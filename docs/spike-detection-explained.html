@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trace-Point - Spike Detection Explained</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1419;
+      color: #e7e9ea;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      color: #71767b;
+      font-size: 1.1rem;
+      margin-bottom: 40px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: #16181c;
+      border: 1px solid #2f3336;
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #e7e9ea;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .icon-blue { background: rgba(59,130,246,0.2); color: #3b82f6; }
+    .icon-purple { background: rgba(139,92,246,0.2); color: #8b5cf6; }
+    .icon-green { background: rgba(34,197,94,0.2); color: #22c55e; }
+    .icon-amber { background: rgba(251,191,36,0.2); color: #fbbf24; }
+    .icon-red { background: rgba(239,68,68,0.2); color: #ef4444; }
+
+    .controls { display: flex; flex-direction: column; gap: 20px; }
+    .control-row { display: flex; flex-direction: column; gap: 8px; }
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.875rem;
+      color: #71767b;
+    }
+    .control-label span:last-child {
+      color: #3b82f6;
+      font-family: 'Consolas', monospace;
+      font-weight: 600;
+    }
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #2f3336;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.4);
+    }
+
+    .formula-box {
+      background: #1c1f23;
+      border: 1px solid #2f3336;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .formula {
+      font-family: 'Consolas', monospace;
+      font-size: 1.2rem;
+      color: #e7e9ea;
+      margin-bottom: 8px;
+    }
+    .formula .highlight { color: #3b82f6; font-weight: 700; }
+    .formula .warning { color: #ef4444; font-weight: 700; }
+    .formula-note { font-size: 0.8rem; color: #71767b; }
+
+    .chart-container {
+      position: relative;
+      height: 280px;
+      margin-bottom: 16px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: #71767b;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .dot-cpu { background: #3b82f6; }
+    .dot-ma { background: #8b5cf6; }
+    .dot-threshold { background: #ef4444; }
+    .dot-spike { background: #fbbf24; }
+
+    .spike-result {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-top: 16px;
+    }
+    .spike-result.no {
+      background: rgba(34,197,94,0.15);
+      color: #22c55e;
+    }
+    .spike-result.yes {
+      background: rgba(239,68,68,0.15);
+      color: #ef4444;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .thresholds-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .threshold-item {
+      background: #1c1f23;
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+    .threshold-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #3b82f6;
+      font-family: 'Consolas', monospace;
+    }
+    .threshold-label {
+      font-size: 0.75rem;
+      color: #71767b;
+      margin-top: 4px;
+    }
+
+    .severity-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 600px) { .severity-grid { grid-template-columns: repeat(2, 1fr); } }
+    .severity-item {
+      padding: 12px 8px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+    .severity-critical { background: rgba(239,68,68,0.2); color: #ef4444; }
+    .severity-medium { background: rgba(251,146,60,0.2); color: #fb923c; }
+    .severity-low { background: rgba(251,191,36,0.2); color: #fbbf24; }
+    .severity-normal { background: rgba(34,197,94,0.2); color: #22c55e; }
+    .severity-item .num {
+      font-size: 1.2rem;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .flow-diagram {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 20px 0;
+    }
+    .flow-step {
+      background: #1c1f23;
+      border: 1px solid #2f3336;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      color: #e7e9ea;
+    }
+    .flow-arrow {
+      color: #3b82f6;
+      font-size: 1.2rem;
+    }
+
+    .full-width { grid-column: 1 / -1; }
+    .text-center { text-align: center; }
+
+    .example-scenario {
+      background: #1c1f23;
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+    .example-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #2f3336;
+      font-size: 0.9rem;
+    }
+    .example-row:last-child { border-bottom: none; }
+    .example-row .label { color: #71767b; }
+    .example-row .value { color: #e7e9ea; font-family: 'Consolas', monospace; }
+    .example-row .value.spike { color: #ef4444; font-weight: 600; }
+    .example-row .value.ok { color: #22c55e; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Trace-Point</h1>
+    <p class="subtitle">How Spike Detection Works — Interactive Explanation</p>
+
+    <div class="formula-box">
+      <div class="formula">
+        <span class="highlight">Spike</span> = Current Value <span class="highlight">&gt;</span> Moving Average <span class="highlight">+</span> (Threshold %)
+      </div>
+      <p class="formula-note">A spike triggers only when the current usage exceeds the moving average by more than the threshold percentage</p>
+    </div>
+
+    <div class="flow-diagram">
+      <div class="flow-step">📊 Prometheus Metrics</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step">📈 Moving Average</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step">🔍 Threshold Check</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step">🚨 Spike Alert</div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">
+          <span class="icon icon-blue">⚡</span>
+          Live Spike Detection Simulator
+        </div>
+        <div class="controls">
+          <div class="control-row">
+            <div class="control-label">
+              <span>Current CPU Usage</span>
+              <span id="currentCpuVal">72%</span>
+            </div>
+            <input type="range" id="currentCpu" min="0" max="100" value="72">
+          </div>
+          <div class="control-row">
+            <div class="control-label">
+              <span>Moving Average (30min window)</span>
+              <span id="movingAvgVal">50%</span>
+            </div>
+            <input type="range" id="movingAvg" min="0" max="100" value="50">
+          </div>
+          <div class="control-row">
+            <div class="control-label">
+              <span>CPU Threshold</span>
+              <span id="thresholdVal">50%</span>
+            </div>
+            <input type="range" id="threshold" min="10" max="100" value="50">
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <canvas id="spikeChart"></canvas>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot dot-cpu"></span> Current CPU</div>
+          <div class="legend-item"><span class="legend-dot dot-ma"></span> Moving Avg</div>
+          <div class="legend-item"><span class="legend-dot dot-threshold"></span> Threshold Line</div>
+        </div>
+
+        <div id="spikeResult" class="spike-result no">
+          <span>✓</span> No Spike Detected
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span class="icon icon-purple">⚙️</span>
+          Detection Parameters
+        </div>
+        <div class="thresholds-grid">
+          <div class="threshold-item">
+            <div class="threshold-value">30s</div>
+            <div class="threshold-label">Polling Interval</div>
+          </div>
+          <div class="threshold-item">
+            <div class="threshold-value">30min</div>
+            <div class="threshold-label">MA Window</div>
+          </div>
+          <div class="threshold-item">
+            <div class="threshold-value">5min</div>
+            <div class="threshold-label">Learning Period</div>
+          </div>
+          <div class="threshold-item">
+            <div class="threshold-value">15min</div>
+            <div class="threshold-label">Alert Cooldown</div>
+          </div>
+          <div class="threshold-item">
+            <div class="threshold-value">80%</div>
+            <div class="threshold-label">Min Absolute Value</div>
+          </div>
+          <div class="threshold-item">
+            <div class="threshold-value">7 days</div>
+            <div class="threshold-label">Data Retention</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card full-width">
+        <div class="card-title">
+          <span class="icon icon-red">📊</span>
+          Severity Classification (Historical Analysis)
+        </div>
+        <div class="severity-grid">
+          <div class="severity-item severity-critical">
+            <span class="num">&gt; 200%</span>
+            Critical
+          </div>
+          <div class="severity-item severity-medium">
+            <span class="num">100-200%</span>
+            Medium
+          </div>
+          <div class="severity-item severity-low">
+            <span class="num">50-100%</span>
+            Low
+          </div>
+          <div class="severity-item severity-normal">
+            <span class="num">&lt; 50%</span>
+            Normal
+          </div>
+        </div>
+        <p style="color:#71767b;font-size:0.85rem;margin-top:12px;text-align:center;">
+          Deviation = (Current - Moving Average) / Moving Average × 100%
+        </p>
+      </div>
+
+      <div class="card full-width">
+        <div class="card-title">
+          <span class="icon icon-green">🔄</span>
+          Example Scenarios
+        </div>
+        <div class="example-scenario">
+          <div class="example-row">
+            <span class="label">Scenario A — Normal</span>
+            <span class="value ok">MA=50%, Current=60%, Threshold=50% → 60% &lt; 75% → No Spike</span>
+          </div>
+          <div class="example-row">
+            <span class="label">Scenario B — Spike!</span>
+            <span class="value spike">MA=50%, Current=80%, Threshold=50% → 80% &gt; 75% → SPIKE!</span>
+          </div>
+          <div class="example-row">
+            <span class="label">Scenario C — Ignored (too low)</span>
+            <span class="value ok">MA=10%, Current=20%, Threshold=50% → 20% &gt; 15% but &lt; 80% absolute → Ignored</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card full-width">
+        <div class="card-title">
+          <span class="icon icon-amber">🎯</span>
+          Gravity Score Formula
+        </div>
+        <div class="formula-box" style="margin-bottom:16px;">
+          <div class="formula">
+            Score = <span class="highlight">Resource Peak</span> × (1 / <span class="highlight">Request Frequency</span>)
+          </div>
+        </div>
+        <div class="severity-grid">
+          <div class="severity-item severity-critical">
+            <span class="num">6+</span>
+            High Priority
+          </div>
+          <div class="severity-item severity-medium">
+            <span class="num">3-6</span>
+            Consider Optimize
+          </div>
+          <div class="severity-item severity-normal">
+            <span class="num">0-3</span>
+            Low (Monitor)
+          </div>
+          <div class="severity-item" style="background:rgba(139,92,246,0.2);color:#8b5cf6;">
+            <span class="num">/batch</span>
+            Auto-detect Jobs
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ctx = document.getElementById('spikeChart').getContext('2d');
+
+    const labels = ['-30m', '-25m', '-20m', '-15m', '-10m', '-5m', 'Now'];
+
+    const cpuData = [45, 52, 48, 55, 51, 58, 72];
+    const maData = Array(7).fill(50);
+    const thresholdData = Array(7).fill(75);
+
+    let currentCpu = 72;
+    let movingAvg = 50;
+    let threshold = 50;
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Current CPU',
+            data: cpuData,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59,130,246,0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            pointBackgroundColor: '#3b82f6'
+          },
+          {
+            label: 'Moving Avg',
+            data: maData,
+            borderColor: '#8b5cf6',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            fill: false,
+            tension: 0,
+            pointRadius: 0
+          },
+          {
+            label: 'Threshold',
+            data: thresholdData,
+            borderColor: '#ef4444',
+            borderWidth: 2,
+            borderDash: [10, 5],
+            fill: false,
+            tension: 0,
+            pointRadius: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1c1f23',
+            borderColor: '#2f3336',
+            borderWidth: 1,
+            titleColor: '#e7e9ea',
+            bodyColor: '#71767b',
+            padding: 12
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: '#2f3336' },
+            ticks: { color: '#71767b' }
+          },
+          y: {
+            min: 0,
+            max: 100,
+            grid: { color: '#2f3336' },
+            ticks: {
+              color: '#71767b',
+              callback: v => v + '%'
+            }
+          }
+        }
+      }
+    });
+
+    function updateChart() {
+      const thresholdLine = movingAvg * (1 + threshold / 100);
+      cpuData[6] = currentCpu;
+      for (let i = 0; i < 6; i++) {
+        cpuData[i] = movingAvg + (Math.random() - 0.5) * 20;
+      }
+      maData.fill(movingAvg);
+      thresholdData.fill(thresholdLine);
+
+      chart.data.datasets[0].data = [...cpuData];
+      chart.data.datasets[1].data = [...maData];
+      chart.data.datasets[2].data = [...thresholdData];
+      chart.update('none');
+
+      const spikeLine = movingAvg * (1 + threshold / 100);
+      const isSpike = currentCpu > spikeLine && currentCpu > 80;
+      const result = document.getElementById('spikeResult');
+
+      if (isSpike) {
+        result.className = 'spike-result yes';
+        result.innerHTML = '<span>🚨</span> SPIKE DETECTED! Current exceeds threshold.';
+      } else {
+        result.className = 'spike-result no';
+        result.innerHTML = '<span>✓</span> No Spike Detected';
+      }
+
+      document.getElementById('thresholdLine').textContent = spikeLine.toFixed(1) + '%';
+    }
+
+    ['currentCpu', 'movingAvg', 'threshold'].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('input', () => {
+        if (id === 'currentCpu') {
+          currentCpu = parseInt(el.value);
+          document.getElementById('currentCpuVal').textContent = currentCpu + '%';
+        } else if (id === 'movingAvg') {
+          movingAvg = parseInt(el.value);
+          document.getElementById('movingAvgVal').textContent = movingAvg + '%';
+        } else {
+          threshold = parseInt(el.value);
+          document.getElementById('thresholdVal').textContent = threshold + '%';
+        }
+        updateChart();
+      });
+    });
+
+    updateChart();
+  </script>
+</body>
+</html>
