@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"os"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -107,10 +108,12 @@ func (c *Client) QueryInstantMetrics() ([]domain.ContainerMetrics, error) {
 	return result, nil
 }
 
-// QueryTimelineMetrics fetches CPU and RAM time series for the timeline chart.
+// QueryTimelineMetrics fetches CPU and RAM time series for the timeline chart,
+// including both request-based and limit-based utilization.
 func (c *Client) QueryTimelineMetrics(start, end time.Time, deploymentFilter string) ([]domain.TimelineMetric, error) {
 	step := calculateStep(start, end)
 
+	// Query request-based CPU and RAM
 	cpuQuery := BuildCPUUtilizationQuery(c.namespacesRegex())
 	ramQuery := BuildRAMUtilizationQuery(c.namespacesRegex())
 
@@ -124,7 +127,40 @@ func (c *Client) QueryTimelineMetrics(start, end time.Time, deploymentFilter str
 		return nil, fmt.Errorf("failed to query RAM timeline: %w", err)
 	}
 
-	// Build RAM lookup: deployment+namespace+timestamp -> RAM%
+	// Query limit-based CPU and RAM
+	cpuLimitQuery := BuildCPUUtilizationOfLimitQuery(c.namespacesRegex())
+	ramLimitQuery := BuildRAMUtilizationOfLimitQuery(c.namespacesRegex())
+
+	// DEBUG: Log limit queries
+	log.Printf("[Timeline] CPU Limit Query: %s", cpuLimitQuery)
+	log.Printf("[Timeline] RAM Limit Query: %s", ramLimitQuery)
+
+	cpuLimitResults, err := c.queryRange(cpuLimitQuery, start, end, step)
+	if err != nil {
+		log.Printf("[Prometheus] Warning: failed to query CPU limit timeline: %v", err)
+		// Continue without limit data
+		cpuLimitResults = &RangeQueryResult{}
+	}
+
+	ramLimitResults, err := c.queryRange(ramLimitQuery, start, end, step)
+	if err != nil {
+		log.Printf("[Prometheus] Warning: failed to query RAM limit timeline: %v", err)
+		// Continue without limit data
+		ramLimitResults = &RangeQueryResult{}
+	}
+
+	// DEBUG: Log limit results count
+	log.Printf("[Timeline] CPU limit results count: %d", len(cpuLimitResults.Data.Result))
+	log.Printf("[Timeline] RAM limit results count: %d", len(ramLimitResults.Data.Result))
+
+	// DEBUG: Write limit results to file
+	f, _ := os.Create("/tmp/cpu_limit_results.json")
+	defer f.Close()
+	json.NewEncoder(f).Encode(cpuLimitResults)
+	f2, _ := os.Create("/tmp/ram_limit_results.json")
+	defer f2.Close()
+	json.NewEncoder(f2).Encode(ramLimitResults)
+	log.Printf("[DEBUG] Wrote limit results to files, CPU: %d, RAM: %d", len(cpuLimitResults.Data.Result), len(ramLimitResults.Data.Result))
 	ramLookup := make(map[string]float64)
 	for _, r := range ramResults.Data.Result {
 		deployment := r.Metric["deployment"]
@@ -141,7 +177,50 @@ func (c *Client) QueryTimelineMetrics(start, end time.Time, deploymentFilter str
 		}
 	}
 
-	// Build timeline metrics
+	// Build CPU limit lookup: deployment+namespace+timestamp -> CPU% of limit
+	cpuLimitLookup := make(map[string]float64)
+	for _, r := range cpuLimitResults.Data.Result {
+		deployment := r.Metric["deployment"]
+		namespace := r.Metric["namespace"]
+
+		if deploymentFilter != "" && deployment != deploymentFilter {
+			continue
+		}
+
+		for _, v := range r.Values {
+			ts, val := parseRangeValue(v)
+			key := fmt.Sprintf("%s/%s/%d", deployment, namespace, ts.Unix())
+			cpuLimitLookup[key] = val
+		}
+	}
+
+	// Build RAM limit lookup: deployment+namespace+timestamp -> RAM% of limit
+	ramLimitLookup := make(map[string]float64)
+	for _, r := range ramLimitResults.Data.Result {
+		deployment := r.Metric["deployment"]
+		namespace := r.Metric["namespace"]
+
+		if deploymentFilter != "" && deployment != deploymentFilter {
+			continue
+		}
+
+		for _, v := range r.Values {
+			ts, val := parseRangeValue(v)
+			key := fmt.Sprintf("%s/%s/%d", deployment, namespace, ts.Unix())
+			ramLimitLookup[key] = val
+		}
+	}
+
+	// DEBUG: Log limit lookups
+	log.Printf("[Timeline] CPU limit lookup size: %d", len(cpuLimitLookup))
+	log.Printf("[Timeline] RAM limit lookup size: %d", len(ramLimitLookup))
+	// for k, v := range cpuLimitLookup {
+	// 	if strings.Contains(k, "iic-dashboard") {
+	// 		log.Printf("[Timeline] iic-dashboard CPU limit key: %s, value: %f", k, v)
+	// 	}
+	// }
+
+	// Build timeline metrics with both request-based and limit-based values
 	var metrics []domain.TimelineMetric
 	for _, r := range cpuResults.Data.Result {
 		deployment := r.Metric["deployment"]
@@ -155,13 +234,17 @@ func (c *Client) QueryTimelineMetrics(start, end time.Time, deploymentFilter str
 			ts, cpuVal := parseRangeValue(v)
 			key := fmt.Sprintf("%s/%s/%d", deployment, namespace, ts.Unix())
 			ramVal := ramLookup[key]
+			cpuLimitVal := cpuLimitLookup[key]
+			ramLimitVal := ramLimitLookup[key]
 
 			metrics = append(metrics, domain.TimelineMetric{
-				Timestamp:      ts,
-				DeploymentName: deployment,
-				Namespace:      namespace,
-				CPUPercent:     cpuVal,
-				RAMPercent:     ramVal,
+				Timestamp:         ts,
+				DeploymentName:    deployment,
+				Namespace:         namespace,
+				CPUPercent:        cpuVal,
+				RAMPercent:        ramVal,
+				CPUPercentOfLimit: cpuLimitVal,
+				RAMPercentOfLimit: ramLimitVal,
 			})
 		}
 	}
@@ -350,4 +433,15 @@ func calculateStep(start, end time.Time) string {
 	default: // ≤ 12 hours → 30s step
 		return "30"
 	}
+}
+
+// DEBUG function to log limit results
+func debugLogLimitResults(cpuLimitResults, ramLimitResults *RangeQueryResult) {
+    f, _ := os.Create("/tmp/cpu_limit_results.json")
+    defer f.Close()
+    json.NewEncoder(f).Encode(cpuLimitResults)
+    f2, _ := os.Create("/tmp/ram_limit_results.json")
+    defer f2.Close()
+    json.NewEncoder(f2).Encode(ramLimitResults)
+    log.Printf("[DEBUG] Wrote limit results to files")
 }

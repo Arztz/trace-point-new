@@ -277,7 +277,7 @@ export default function Dashboard() {
                           </span>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-3 gap-4">
                         <div>
                           <p className="text-xs mb-1.5" style={{ color: '#8e8e93', lineHeight: 1.50 }}>Avg CPU</p>
                           <div className="flex items-baseline gap-2">
@@ -289,11 +289,17 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <p className="text-xs mb-1.5" style={{ color: '#8e8e93', lineHeight: 1.50 }}>Max CPU</p>
+                          <p className="text-xl font-mono font-semibold" style={{ color: s.cpu_classification === 'high' ? '#ef4444' : s.cpu_classification === 'medium' ? '#eab308' : '#22c55e', lineHeight: 1.10, fontFamily: 'JetBrains Mono, monospace' }}>
+                            {formatPercent(s.max_cpu)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs mb-1.5" style={{ color: '#8e8e93', lineHeight: 1.50 }}>Limit CPU</p>
                           <div className="flex items-baseline gap-2">
-                            <p className="text-xl font-mono font-semibold" style={{ color: s.max_cpu > 100 ? '#ef4444' : '#ffffff', lineHeight: 1.10, fontFamily: 'JetBrains Mono, monospace' }}>
-                              {formatPercent(s.max_cpu)}
+                            <p className="text-xl font-mono font-semibold" style={{ color: s.cpu_classification === 'high' ? '#ef4444' : s.cpu_classification === 'medium' ? '#eab308' : '#22c55e', lineHeight: 1.10, fontFamily: 'JetBrains Mono, monospace' }}>
+                              {formatPercent(s.max_cpu_of_limit)}
                             </p>
-                            <RecommendHint value={s.max_cpu} label="Recommend limit" />
+                            <RecommendHint value={s.max_cpu_of_limit} label="Limit usage" />
                           </div>
                         </div>
                         <div>
@@ -307,11 +313,17 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <p className="text-xs mb-1.5" style={{ color: '#8e8e93', lineHeight: 1.50 }}>Max RAM</p>
+                          <p className="text-xl font-mono font-semibold" style={{ color: s.ram_classification === 'high' ? '#ef4444' : s.ram_classification === 'medium' ? '#eab308' : '#22c55e', lineHeight: 1.10, fontFamily: 'JetBrains Mono, monospace' }}>
+                            {formatPercent(s.max_ram)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs mb-1.5" style={{ color: '#8e8e93', lineHeight: 1.50 }}>Limit RAM</p>
                           <div className="flex items-baseline gap-2">
-                            <p className="text-xl font-mono font-semibold" style={{ color: s.max_ram > 100 ? '#ef4444' : '#ffffff', lineHeight: 1.10, fontFamily: 'JetBrains Mono, monospace' }}>
-                              {formatPercent(s.max_ram)}
+                            <p className="text-xl font-mono font-semibold" style={{ color: s.ram_classification === 'high' ? '#ef4444' : s.ram_classification === 'medium' ? '#eab308' : '#22c55e', lineHeight: 1.10, fontFamily: 'JetBrains Mono, monospace' }}>
+                              {formatPercent(s.max_ram_of_limit)}
                             </p>
-                            <RecommendHint value={s.max_ram} label="Recommend limit" />
+                            <RecommendHint value={s.max_ram_of_limit} label="Limit usage" />
                           </div>
                         </div>
                       </div>

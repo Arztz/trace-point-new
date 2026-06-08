@@ -3,6 +3,7 @@ package api
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/trace-point/trace-point-renew/internal/domain"
@@ -21,6 +22,10 @@ func (s *Server) handleTimeline(w http.ResponseWriter, r *http.Request) {
 	switch timeRange {
 	case "1h":
 		start = end.Add(-1 * time.Hour)
+	case "3h":
+		start = end.Add(-3 * time.Hour)
+	case "5h":
+		start = end.Add(-5 * time.Hour)
 	case "6h":
 		start = end.Add(-6 * time.Hour)
 	case "12h":
@@ -44,6 +49,10 @@ func (s *Server) handleTimeline(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch timeline metrics from Prometheus
+	log.Println("===========================================")
+	log.Println("[Timeline] ========== FETCHING TIMELINE ==========")
+	log.Println("===========================================")
+	os.Stdout.Sync() // Force flush the log
 	metrics, err := inst.PromClient.QueryTimelineMetrics(start, end, deploymentFilter)
 	if err != nil {
 		log.Printf("[Timeline] Failed to query metrics: %v", err)
@@ -93,12 +102,8 @@ func (s *Server) handleTimeline(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// Calculate deployment summaries
-	summaries := calculateSummaries(
-		metrics,
-		s.cfg.Timeline.CPUCloseTo100Threshold, s.cfg.Timeline.CPUFarBelow100Threshold,
-		s.cfg.Timeline.RAMCloseTo100Threshold, s.cfg.Timeline.RAMFarBelow100Threshold,
-	)
+	// Calculate deployment summaries using LIMIT-based classification
+	summaries := calculateSummaries(metrics)
 
 	response := domain.TimelineResponse{
 		GeneratedAt:          time.Now(),
@@ -113,13 +118,20 @@ func (s *Server) handleTimeline(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, response)
 }
 
-func calculateSummaries(metrics []domain.TimelineMetric, cpuHighThreshold, cpuLowThreshold, ramHighThreshold, ramLowThreshold float64) []domain.DeploymentSummary {
+// calculateSummaries computes deployment summaries with LIMIT-based classification.
+// Classification rules (based on LIMIT utilization):
+//   - "high": avg_of_limit >= 50%
+//   - "low": avg_of_limit <= 10%
+//   - "ok": otherwise
+func calculateSummaries(metrics []domain.TimelineMetric) []domain.DeploymentSummary {
 	// Group by deployment
 	type stats struct {
-		totalCPU, totalRAM float64
-		maxCPU, maxRAM     float64
-		count              int
-		namespace          string
+		totalCPU, totalRAM       float64
+		totalCPULimit, totalRAMLimit float64
+		maxCPU, maxRAM           float64
+		maxCPULimit, maxRAMLimit float64
+		count                    int
+		namespace                string
 	}
 	groups := make(map[string]*stats)
 
@@ -131,6 +143,8 @@ func calculateSummaries(metrics []domain.TimelineMetric, cpuHighThreshold, cpuLo
 		s := groups[key]
 		s.totalCPU += m.CPUPercent
 		s.totalRAM += m.RAMPercent
+		s.totalCPULimit += m.CPUPercentOfLimit
+		s.totalRAMLimit += m.RAMPercentOfLimit
 		s.count++
 		if m.CPUPercent > s.maxCPU {
 			s.maxCPU = m.CPUPercent
@@ -138,12 +152,25 @@ func calculateSummaries(metrics []domain.TimelineMetric, cpuHighThreshold, cpuLo
 		if m.RAMPercent > s.maxRAM {
 			s.maxRAM = m.RAMPercent
 		}
+		if m.CPUPercentOfLimit > s.maxCPULimit {
+			s.maxCPULimit = m.CPUPercentOfLimit
+		}
+		if m.RAMPercentOfLimit > s.maxRAMLimit {
+			s.maxRAMLimit = m.RAMPercentOfLimit
+		}
 	}
 
 	summaries := make([]domain.DeploymentSummary, 0, len(groups))
 	for name, s := range groups {
 		avgCPU := s.totalCPU / float64(s.count)
 		avgRAM := s.totalRAM / float64(s.count)
+		avgCPUOfLimit := s.totalCPULimit / float64(s.count)
+		avgRAMOfLimit := s.totalRAMLimit / float64(s.count)
+
+		// Use LIMIT-based classification
+		cpuClassification := domain.ClassifyResourceOfLimit(avgCPUOfLimit)
+		ramClassification := domain.ClassifyResourceOfLimit(avgRAMOfLimit)
+		classification := domain.ClassifyDeploymentOfLimit(avgCPUOfLimit, avgRAMOfLimit)
 
 		summaries = append(summaries, domain.DeploymentSummary{
 			DeploymentName:    name,
@@ -152,9 +179,13 @@ func calculateSummaries(metrics []domain.TimelineMetric, cpuHighThreshold, cpuLo
 			MaxCPU:            s.maxCPU,
 			AvgRAM:            avgRAM,
 			MaxRAM:            s.maxRAM,
-			Classification:    domain.ClassifyDeployment(avgCPU, s.maxCPU, cpuHighThreshold, cpuLowThreshold, avgRAM, s.maxRAM, ramHighThreshold, ramLowThreshold),
-			CPUClassification: domain.ClassifyResource(avgCPU, s.maxCPU, cpuHighThreshold, cpuLowThreshold),
-			RAMClassification: domain.ClassifyResource(avgRAM, s.maxRAM, ramHighThreshold, ramLowThreshold),
+			AvgCPUOfLimit:     avgCPUOfLimit,
+			MaxCPUOfLimit:     s.maxCPULimit,
+			AvgRAMOfLimit:     avgRAMOfLimit,
+			MaxRAMOfLimit:     s.maxRAMLimit,
+			Classification:    classification,
+			CPUClassification: cpuClassification,
+			RAMClassification: ramClassification,
 		})
 	}
 

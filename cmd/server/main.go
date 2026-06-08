@@ -22,6 +22,7 @@ import (
 
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	log.SetOutput(os.Stdout)
 	log.Println("🚀 Starting Trace-Point v1.0.3")
 
 	// Load configuration

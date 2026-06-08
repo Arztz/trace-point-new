@@ -9,9 +9,15 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
   const { chartData, deploymentNames, yDomain } = useMemo(() => {
     if (!metrics.length) return { chartData: [], deploymentNames: [], yDomain: [0, 100] };
 
-    const filteredMetrics = highlighted
-      ? metrics.filter((m) => m.deployment_name === highlighted)
-      : metrics;
+    let filteredMetrics = metrics;
+    
+    // Filter by highlighted (single deployment) or by deployments list
+    if (highlighted) {
+      filteredMetrics = metrics.filter((m) => m.deployment_name === highlighted);
+    } else if (deployments.length > 0) {
+      const deploySet = new Set(deployments);
+      filteredMetrics = metrics.filter((m) => deploySet.has(m.deployment_name));
+    }
 
     const nameSet = new Set();
     const timeMap = new Map();
@@ -39,7 +45,7 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
     const domain = [0, Math.max(roundedMax * 1.1, 100)];
 
     return { chartData: sorted, deploymentNames: Array.from(nameSet), yDomain: domain };
-  }, [metrics, highlighted]);
+  }, [metrics, highlighted, deployments]);
 
   if (!chartData.length) {
     return (
