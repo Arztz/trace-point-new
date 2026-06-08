@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Go Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trace-point-backend
+    ports:
+      - "8088:8088"
+    volumes:
+      - ./data:/app/data
+      - ./config.yaml:/app/config.yaml
+      - ./.env:/app/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - trace-point-network
+
+  # React Frontend (Vite dev mode for hot reload)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend-dev
+    container_name: trace-point-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./web/src:/app/src
+      - ./web/index.html:/app/index.html
+      - ./web/vite.config.js:/app/vite.config.js
+      - ./web/package.json:/app/package.json
+      - ./web/package-lock.json:/app/package-lock.json
+    environment:
+      - WATCHPACK_POLLING=true
+    restart: unless-stopped
+    networks:
+      - trace-point-network
+
+networks:
+  trace-point-network:
+    driver: bridge
+
+volumes:
+  data:
+    driver: local

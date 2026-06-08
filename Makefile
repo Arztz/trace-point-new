@@ -1,4 +1,23 @@
-.PHONY: dev-backend dev-frontend dev build test lint clean
+.PHONY: dev-backend dev-frontend dev build test lint clean deps db-reset docker-up docker-down docker-logs docker-build
+
+# Docker commands
+docker-up:
+	@echo "🐳 Starting Trace-Point with Docker Compose..."
+	docker-compose up -d
+	@echo "✅ Services started!"
+	@echo "   Frontend: http://localhost:5173"
+	@echo "   Backend:  http://localhost:8088"
+
+docker-down:
+	@echo "🐳 Stopping Trace-Point..."
+	docker-compose down
+
+docker-logs:
+	docker-compose logs -f
+
+docker-build:
+	@echo "🔨 Building Docker images..."
+	docker-compose build --no-cache
 
 # Backend development (with hot reload if air is installed)
 dev-backend:

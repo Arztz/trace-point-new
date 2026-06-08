@@ -1,4 +1,8 @@
 .env
-data/*
+./data/
 config.yaml
 config.yaml.example
+
+# Docker
+.dockerignore
+*.dockerfile*
