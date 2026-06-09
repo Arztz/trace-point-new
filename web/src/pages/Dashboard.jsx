@@ -2,7 +2,7 @@ import { useState, useMemo, useRef } from 'react';
 import { useTimeline } from '../hooks/useData';
 import TimelineChart from '../components/TimelineChart';
 import TimeRangeSelector from '../components/TimeRangeSelector';
-import DeploymentSelector from '../components/DeploymentSelector';
+import NamespaceSelector from '../components/NamespaceSelector';
 import { formatPercent, getDeploymentColor } from '../utils/formatters';
 
 function RecommendHint({ value, label, target = 80 }) {
@@ -70,31 +70,22 @@ function RecommendHint({ value, label, target = 80 }) {
 
 export default function Dashboard() {
   const [timeRange, setTimeRange] = useState('1h');
-  const [selectedDeployment, setSelectedDeployment] = useState(null);
+  const [selectedNamespace, setSelectedNamespace] = useState('');
   const [highlighted, setHighlighted] = useState(null);
-  const [cpuFilter, setCpuFilter] = useState(null);
-  const [ramFilter, setRamFilter] = useState(null);
+  const [cpuFilter, setCpuFilter] = useState('');
+  const [ramFilter, setRamFilter] = useState('');
 
-  const { data, isLoading, error, refetch, isFetching } = useTimeline(timeRange, selectedDeployment);
+  const { data, isLoading, error, refetch, isFetching } = useTimeline(timeRange, '');
 
-  const deploymentNames = useMemo(() => {
-    if (!data?.metrics) return [];
-    return [...new Set(data.metrics.map((m) => m.deployment_name))];
-  }, [data?.metrics]);
-
-  const deploymentColorMap = useMemo(() => {
-    const map = {};
-    deploymentNames.forEach((name, i) => {
-      map[name] = getDeploymentColor(i);
-    });
-    return map;
-  }, [deploymentNames]);
-
+  // filteredSummary must be defined before deploymentNames
   const filteredSummary = useMemo(() => {
     if (!data?.summary) return [];
     let sorted = [...data.summary].sort((a, b) =>
       a.deployment_name.localeCompare(b.deployment_name)
     );
+    if (selectedNamespace) {
+      sorted = sorted.filter((s) => s.namespace === selectedNamespace);
+    }
     if (highlighted) {
       sorted = sorted.filter((s) => s.deployment_name === highlighted);
     }
@@ -105,7 +96,20 @@ export default function Dashboard() {
       sorted = sorted.filter((s) => s.ram_classification === ramFilter);
     }
     return sorted;
-  }, [data?.summary, highlighted, cpuFilter, ramFilter]);
+  }, [data?.summary, selectedNamespace, highlighted, cpuFilter, ramFilter]);
+
+  // deploymentNames should match filteredSummary order for consistent colors
+  const deploymentNames = useMemo(() => {
+    return filteredSummary.map(s => s.deployment_name);
+  }, [filteredSummary]);
+
+  const deploymentColorMap = useMemo(() => {
+    const map = {};
+    deploymentNames.forEach((name, i) => {
+      map[name] = getDeploymentColor(i);
+    });
+    return map;
+  }, [deploymentNames]);
 
   const handleCardClick = (deploymentName) => {
     setHighlighted((prev) => (prev === deploymentName ? null : deploymentName));
@@ -131,10 +135,10 @@ export default function Dashboard() {
           <p className="page-header p">Resource utilization timeline — deployment level</p>
         </div>
         <div className="flex items-center gap-3">
-          <DeploymentSelector
+          <NamespaceSelector
             deployments={data?.available_deployments || []}
-            value={selectedDeployment}
-            onChange={setSelectedDeployment}
+            value={selectedNamespace}
+            onChange={setSelectedNamespace}
           />
           <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
           <button

@@ -19,13 +19,13 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
       filteredMetrics = metrics.filter((m) => deploySet.has(m.deployment_name));
     }
 
-    const nameSet = new Set();
+    // Use deployments prop order for consistent coloring
+    const deploymentNames = deployments.length > 0 ? deployments : [...new Set(filteredMetrics.map(m => m.deployment_name))];
+    
     const timeMap = new Map();
 
     filteredMetrics.forEach((m) => {
       const ts = new Date(m.timestamp).getTime();
-      nameSet.add(m.deployment_name);
-
       if (!timeMap.has(ts)) {
         timeMap.set(ts, { timestamp: ts });
       }
@@ -44,7 +44,7 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
     const roundedMax = maxVal <= 10 ? 20 : maxVal <= 50 ? 60 : maxVal <= 100 ? 120 : Math.ceil(maxVal / 50) * 50;
     const domain = [0, Math.max(roundedMax * 1.1, 100)];
 
-    return { chartData: sorted, deploymentNames: Array.from(nameSet), yDomain: domain };
+    return { chartData: sorted, deploymentNames: deploymentNames, yDomain: domain };
   }, [metrics, highlighted, deployments]);
 
   if (!chartData.length) {
