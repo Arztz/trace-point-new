@@ -104,7 +104,7 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
             fontSize={11}
             tickLine={false}
             tickFormatter={(v) => `${v.toFixed(0)}%`}
-            domain={yDomain}
+            domain={yDomain}"1"
           />
           {highlighted && <Tooltip content={<CustomTooltip />} />}
 
