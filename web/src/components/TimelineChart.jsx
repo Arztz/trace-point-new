@@ -1,27 +1,49 @@
-import { useMemo, Fragment } from 'react';
+import { useMemo, Fragment } from "react";
 import {
-  ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, ReferenceLine,
-} from 'recharts';
-import { formatShortTime, getDeploymentColor, formatPercent } from '../utils/formatters';
+  ComposedChart,
+  Line,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from "recharts";
+import {
+  formatShortTime,
+  getDeploymentColor,
+  formatPercent,
+} from "../utils/formatters";
 
-export default function TimelineChart({ metrics = [], spikeMarkers = [], highlighted, deployments = [] }) {
+export default function TimelineChart({
+  metrics = [],
+  spikeMarkers = [],
+  highlighted,
+  deployments = [],
+}) {
   const { chartData, deploymentNames, yDomain } = useMemo(() => {
-    if (!metrics.length) return { chartData: [], deploymentNames: [], yDomain: [0, 100] };
+    if (!metrics.length)
+      return { chartData: [], deploymentNames: [], yDomain: [0, 100] };
 
     let filteredMetrics = metrics;
-    
+
     // Filter by highlighted (single deployment) or by deployments list
     if (highlighted) {
-      filteredMetrics = metrics.filter((m) => m.deployment_name === highlighted);
+      filteredMetrics = metrics.filter(
+        (m) => m.deployment_name === highlighted,
+      );
     } else if (deployments.length > 0) {
       const deploySet = new Set(deployments);
       filteredMetrics = metrics.filter((m) => deploySet.has(m.deployment_name));
     }
 
     // Use deployments prop order for consistent coloring
-    const deploymentNames = deployments.length > 0 ? deployments : [...new Set(filteredMetrics.map(m => m.deployment_name))];
-    
+    const deploymentNames =
+      deployments.length > 0
+        ? deployments
+        : [...new Set(filteredMetrics.map((m) => m.deployment_name))];
+
     const timeMap = new Map();
 
     filteredMetrics.forEach((m) => {
@@ -34,23 +56,39 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
       entry[`${m.deployment_name}_ram`] = m.ram_percent;
     });
 
-    const sorted = Array.from(timeMap.values()).sort((a, b) => a.timestamp - b.timestamp);
+    const sorted = Array.from(timeMap.values()).sort(
+      (a, b) => a.timestamp - b.timestamp,
+    );
 
     let maxVal = 0;
     filteredMetrics.forEach((m) => {
       maxVal = Math.max(maxVal, m.cpu_percent || 0, m.ram_percent || 0);
     });
 
-    const roundedMax = maxVal <= 10 ? 20 : maxVal <= 50 ? 60 : maxVal <= 100 ? 120 : Math.ceil(maxVal / 50) * 50;
+    const roundedMax =
+      maxVal <= 10
+        ? 20
+        : maxVal <= 50
+          ? 60
+          : maxVal <= 100
+            ? 120
+            : Math.ceil(maxVal / 50) * 50;
     const domain = [0, Math.max(roundedMax * 1.1, 100)];
 
-    return { chartData: sorted, deploymentNames: deploymentNames, yDomain: domain };
+    return {
+      chartData: sorted,
+      deploymentNames: deploymentNames,
+      yDomain: domain,
+    };
   }, [metrics, highlighted, deployments]);
 
   if (!chartData.length) {
     return (
-      <div className="flex items-center justify-center glass-card" style={{ height: '400px', borderRadius: '20px' }}>
-        <p style={{ color: '#8e8e93' }}>No metrics data available</p>
+      <div
+        className="flex items-center justify-center glass-card"
+        style={{ height: "400px", borderRadius: "20px" }}
+      >
+        <p style={{ color: "#8e8e93" }}>No metrics data available</p>
       </div>
     );
   }
@@ -58,26 +96,42 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length || !highlighted) return null;
 
-    const filtered = payload.filter((entry) => entry.dataKey.startsWith(`${highlighted}_`));
+    const filtered = payload.filter((entry) =>
+      entry.dataKey.startsWith(`${highlighted}_`),
+    );
     if (!filtered.length) return null;
 
     return (
-      <div className="p-4" style={{
-        background: '#222222',
-        border: '1px solid #333333',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-        borderRadius: '12px',
-        maxWidth: '320px',
-      }}>
-        <p className="font-semibold mb-2" style={{ color: '#ffffff', fontFamily: 'Outfit, sans-serif' }}>
+      <div
+        className="p-4"
+        style={{
+          background: "#222222",
+          border: "1px solid #333333",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+          borderRadius: "12px",
+          maxWidth: "320px",
+        }}
+      >
+        <p
+          className="font-semibold mb-2"
+          style={{ color: "#ffffff", fontFamily: "Outfit, sans-serif" }}
+        >
           {formatShortTime(label)}
         </p>
         {filtered.map((entry, i) => {
-          const type = entry.dataKey.endsWith('_cpu') ? 'CPU' : 'RAM';
+          const type = entry.dataKey.endsWith("_cpu") ? "CPU" : "RAM";
           return (
             <div key={i} className="flex justify-between gap-6 py-1">
-              <span style={{ color: entry.color }}>{highlighted} ({type})</span>
-              <span className="font-mono" style={{ color: '#ffffff', fontFamily: 'JetBrains Mono, monospace' }}>
+              <span style={{ color: entry.color }}>
+                {highlighted} ({type})
+              </span>
+              <span
+                className="font-mono"
+                style={{
+                  color: "#ffffff",
+                  fontFamily: "JetBrains Mono, monospace",
+                }}
+              >
                 {formatPercent(entry.value)}
               </span>
             </div>
@@ -90,7 +144,10 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
   return (
     <div className="glass-card p-5">
       <ResponsiveContainer width="100%" height={400}>
-        <ComposedChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+        <ComposedChart
+          data={chartData}
+          margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
           <XAxis
             dataKey="timestamp"
@@ -104,12 +161,17 @@ export default function TimelineChart({ metrics = [], spikeMarkers = [], highlig
             fontSize={11}
             tickLine={false}
             tickFormatter={(v) => `${v.toFixed(0)}%`}
-            domain={yDomain}"1"
+            domain={yDomain}
           />
           {highlighted && <Tooltip content={<CustomTooltip />} />}
 
           {yDomain[1] >= 100 && (
-            <ReferenceLine y={100} stroke="#ef4444" strokeDasharray="8 4" strokeOpacity={0.4} />
+            <ReferenceLine
+              y={100}
+              stroke="#ef4444"
+              strokeDasharray="8 4"
+              strokeOpacity={0.4}
+            />
           )}
 
           {spikeMarkers.map((spike, i) => (

@@ -55,7 +55,7 @@ func BuildCPUUtilizationOfLimitQuery(namespacesRegex string) string {
     /
     sum by (pod, deployment, namespace) (
         label_replace(
-            kube_pod_container_resource_limits{namespace=~"%s", resource="cpu"},
+            kube_pod_container_resource_limits{namespace=~"%s", container!="", resource="cpu"},
             "deployment", "$1", "pod", "(.*)-[a-z0-9]+-[a-z0-9]+"
         )
     )
@@ -75,7 +75,7 @@ func BuildRAMUtilizationOfLimitQuery(namespacesRegex string) string {
     /
     sum by (pod, deployment, namespace) (
         label_replace(
-            kube_pod_container_resource_limits{namespace=~"%s", resource="memory"},
+            kube_pod_container_resource_limits{namespace=~"%s", container!="", resource="memory"},
             "deployment", "$1", "pod", "(.*)-[a-z0-9]+-[a-z0-9]+"
         )
     )
@@ -135,7 +135,7 @@ func BuildDeploymentCPUOfLimitQuery(deployment, namespace string) string {
     /
     sum by (pod, deployment, namespace) (
         label_replace(
-            kube_pod_container_resource_limits{namespace="%s", resource="cpu"},
+            kube_pod_container_resource_limits{namespace="%s", container!="", resource="cpu"},
             "deployment", "$1", "pod", "(.*)-[a-z0-9]+-[a-z0-9]+"
         )
     )
@@ -155,9 +155,10 @@ func BuildDeploymentRAMOfLimitQuery(deployment, namespace string) string {
     /
     sum by (pod, deployment, namespace) (
         label_replace(
-            kube_pod_container_resource_limits{namespace="%s", resource="memory"},
+            kube_pod_container_resource_limits{namespace="%s", container!="", resource="memory"},
             "deployment", "$1", "pod", "(.*)-[a-z0-9]+-[a-z0-9]+"
         )
     )
 ) * 100`, namespace, namespace)
 }
+

@@ -153,14 +153,24 @@ func (c *Client) QueryTimelineMetrics(start, end time.Time, deploymentFilter str
 	log.Printf("[Timeline] CPU limit results count: %d", len(cpuLimitResults.Data.Result))
 	log.Printf("[Timeline] RAM limit results count: %d", len(ramLimitResults.Data.Result))
 
-	// DEBUG: Write limit results to file
-	f, _ := os.Create("/tmp/cpu_limit_results.json")
-	defer f.Close()
-	json.NewEncoder(f).Encode(cpuLimitResults)
-	f2, _ := os.Create("/tmp/ram_limit_results.json")
-	defer f2.Close()
-	json.NewEncoder(f2).Encode(ramLimitResults)
-	log.Printf("[DEBUG] Wrote limit results to files, CPU: %d, RAM: %d", len(cpuLimitResults.Data.Result), len(ramLimitResults.Data.Result))
+	// DEBUG: Write all results to files
+	cpuF, _ := os.Create("/tmp/cpu_request_results.json")
+	defer cpuF.Close()
+	json.NewEncoder(cpuF).Encode(cpuResults)
+	ramF, _ := os.Create("/tmp/ram_request_results.json")
+	defer ramF.Close()
+	json.NewEncoder(ramF).Encode(ramResults)
+	cpuLimitF, _ := os.Create("/tmp/cpu_limit_results.json")
+	defer cpuLimitF.Close()
+	json.NewEncoder(cpuLimitF).Encode(cpuLimitResults)
+	ramLimitF, _ := os.Create("/tmp/ram_limit_results.json")
+	defer ramLimitF.Close()
+	json.NewEncoder(ramLimitF).Encode(ramLimitResults)
+	log.Printf("[DEBUG] Wrote all results to files, CPU request: %d, RAM request: %d, CPU limit: %d, RAM limit: %d", 
+		len(cpuResults.Data.Result), 
+		len(ramResults.Data.Result), 
+		len(cpuLimitResults.Data.Result), 
+		len(ramLimitResults.Data.Result))
 	ramLookup := make(map[string]float64)
 	for _, r := range ramResults.Data.Result {
 		deployment := r.Metric["deployment"]

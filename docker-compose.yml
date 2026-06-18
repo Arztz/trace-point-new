@@ -13,6 +13,7 @@ services:
       - ./data:/app/data
       - ./config.yaml:/app/config.yaml
       - ./.env:/app/.env
+    network_mode: "host"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8088/health"]
@@ -20,8 +21,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-    networks:
-      - trace-point-network
+    # networks:
+    #   - trace-point-network
 
   # React Frontend (Vite dev mode for hot reload)
   frontend:
@@ -38,14 +39,16 @@ services:
       - ./web/package.json:/app/package.json
       - ./web/package-lock.json:/app/package-lock.json
     environment:
-      - WATCHPACK_POLLING=true
+      WATCHPACK_POLLING: "true"
+      VITE_BACKEND_URL: "http://localhost:8088"
     restart: unless-stopped
-    networks:
-      - trace-point-network
+    network_mode: "host"
+    # networks:
+    #   - trace-point-network
 
-networks:
-  trace-point-network:
-    driver: bridge
+# networks:
+#   trace-point-network:
+#     driver: bridge
 
 volumes:
   data:
